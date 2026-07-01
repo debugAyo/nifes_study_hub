@@ -1,346 +1,21 @@
 /* ══════════════════════════════════════════════════
-   NIFES Study Hub — Complete Application
+   NIFES Study Hub — Main Application (UI Layer)
    ══════════════════════════════════════════════════ */
-
-/* ─── Supabase Data Layer ─────────────────────── */
-let supabaseClient = null;
-
-function initSupabase(url, anonKey) {
-  if (supabaseClient) return supabaseClient;
-  if (!window.supabase) return null;
-  supabaseClient = window.supabase.createClient(url, anonKey);
-  return supabaseClient;
-}
-
-async function dbFetchQuestions(filters = {}) {
-  try {
-    if (!supabaseClient) return { success: false, error: 'Supabase not configured', data: [] };
-    let query = supabaseClient.from('questions').select('*');
-    if (filters.level) query = query.eq('level', filters.level);
-    if (filters.course) query = query.eq('course', filters.course);
-    if (filters.year) query = query.eq('year', filters.year);
-    if (filters.type) query = query.eq('type', filters.type);
-    const { data, error } = await query.order('created_at', { ascending: false });
-    if (error) throw error;
-    return { success: true, data };
-  } catch (err) {
-    console.error('[data] fetchQuestions:', err);
-    return { success: false, error: err.message, data: [] };
-  }
-}
-
-async function dbAddQuestion(questionData) {
-  try {
-    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
-    const user = await supabaseClient.auth.getUser();
-    const payload = { ...questionData, user_id: user?.data?.user?.id || null };
-    const { data, error } = await supabaseClient.from('questions').insert(payload).select().single();
-    if (error) throw error;
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
-async function dbFetchMaterials(filters = {}) {
-  try {
-    if (!supabaseClient) return { success: false, data: [] };
-    let query = supabaseClient.from('materials').select('*');
-    if (filters.level) query = query.eq('level', filters.level);
-    if (filters.course) query = query.eq('course', filters.course);
-    const { data, error } = await query.order('created_at', { ascending: false });
-    if (error) throw error;
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message, data: [] };
-  }
-}
-
-async function dbUploadMaterial(file, metadata) {
-  try {
-    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return { success: false, error: 'You must be logged in to upload.' };
-
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const filePath = user.id + '/' + timestamp + '_' + safeName;
-
-    const { error: uploadError } = await supabaseClient.storage
-      .from('study-materials').upload(filePath, file, { cacheControl: '3600' });
-    if (uploadError) throw uploadError;
-
-    const { data: { publicUrl } } = supabaseClient.storage
-      .from('study-materials').getPublicUrl(filePath);
-
-    const { data, error: dbError } = await supabaseClient.from('materials').insert({
-      level: metadata.level, course: metadata.course, code: metadata.code || '',
-      title: metadata.title, type: metadata.type, file_url: publicUrl,
-      file_name: file.name, file_size: file.size, content_type: file.type, user_id: user.id,
-    }).select().single();
-
-    if (dbError) throw dbError;
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
-async function dbSaveQuizSession(sessionData) {
-  try {
-    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    const payload = { ...sessionData, user_id: user?.id || null };
-    const { data, error } = await supabaseClient.from('quiz_sessions').insert(payload).select().single();
-    if (error) throw error;
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
-async function dbSignUp(email, password, fullName) {
-  try {
-    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
-    const { data, error } = await supabaseClient.auth.signUp({
-      email, password, options: { data: { full_name: fullName } }
-    });
-    if (error) throw error;
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
-async function dbSignIn(email, password) {
-  try {
-    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
-async function dbSignInWithGoogle() {
-  try {
-    if (!supabaseClient) return;
-    await supabaseClient.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    });
-  } catch (err) {
-    console.error('Google sign in error:', err);
-  }
-}
-
-async function dbSignOut() {
-  try {
-    if (supabaseClient) await supabaseClient.auth.signOut();
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
-function dbOnAuthChange(callback) {
-  if (!supabaseClient) return;
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    callback(event, session);
-  });
-}
-
-async function dbGetCurrentUser() {
-  try {
-    if (!supabaseClient) return null;
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    return user;
-  } catch { return null; }
-}
-
-/* ─── Tools: Calculator ──────────────────────────── */
-let calcExpression = '';
-let calcResult = '';
-
-function renderCalculator() {
-  const expEl = document.getElementById('calcExpression');
-  const resEl = document.getElementById('calcResult');
-  if (expEl) expEl.textContent = calcExpression || '0';
-  if (resEl) resEl.textContent = calcResult || '';
-}
-
-function calcInput(val) { calcExpression += val; renderCalculator(); }
-function calcClear() { calcExpression = ''; calcResult = ''; renderCalculator(); }
-function calcBackspace() { calcExpression = calcExpression.slice(0, -1); renderCalculator(); }
-
-function calcEquals() {
-  try {
-    let expr = calcExpression
-      .replace(/×/g, '*').replace(/÷/g, '/')
-      .replace(/sin\(/g, 'Math.sin((Math.PI/180)*')
-      .replace(/cos\(/g, 'Math.cos((Math.PI/180)*')
-      .replace(/tan\(/g, 'Math.tan((Math.PI/180)*')
-      .replace(/log\(/g, 'Math.log10(').replace(/ln\(/g, 'Math.log(')
-      .replace(/√\(/g, 'Math.sqrt(').replace(/π/g, 'Math.PI')
-      .replace(/e(?![xp])/g, 'Math.E').replace(/x²/g, '**2').replace(/\^/g, '**');
-    const result = Function('"use strict"; return (' + expr + ')')();
-    calcResult = String(parseFloat(result.toFixed(10)));
-    renderCalculator();
-  } catch { calcResult = 'Error'; renderCalculator(); }
-}
-
-function calcSquare() {
-  try {
-    const val = parseFloat(calcExpression) || 0;
-    calcResult = String(val * val);
-    calcExpression = calcResult;
-    renderCalculator();
-  } catch { calcResult = 'Error'; renderCalculator(); }
-}
-
-function calcToggleSign() {
-  if (calcExpression.startsWith('-')) calcExpression = calcExpression.slice(1);
-  else if (calcExpression && calcExpression !== '0') calcExpression = '-' + calcExpression;
-  renderCalculator();
-}
-
-function initCalculatorView() { calcExpression = ''; calcResult = ''; renderCalculator(); }
-
-/* ─── Tools: CGPA Calculator ─────────────────────── */
-const GRADE_POINTS = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
-
-function initCGPAView() {
-  document.getElementById('cgpaSemesters').value = 1;
-  generateSemesterInputs(1);
-  document.getElementById('cgpaResults').innerHTML = '';
-}
-
-function generateSemesterInputs(count) {
-  const container = document.getElementById('cgpaSemesterInputs');
-  if (!container) return;
-  const num = parseInt(count) || 1;
-  container.innerHTML = '';
-  for (let i = 1; i <= num; i++) {
-    const div = document.createElement('div');
-    div.className = 'semester-card';
-    div.innerHTML = `
-      <div class="semester-header">
-        <span class="semester-title">Semester ${i}</span>
-        <button class="btn-ghost btn-sm" onclick="addCourseRow(${i})">+ Add Course</button>
-      </div>
-      <table class="cgpa-table">
-        <thead><tr>
-          <th style="width:40%">Course</th><th style="width:20%">Credit</th>
-          <th style="width:15%">Grade</th><th style="width:15%">GP</th><th style="width:10%"></th>
-        </tr></thead>
-        <tbody id="sem-${i}-body"></tbody>
-      </table>
-      <div class="semester-gpa" style="margin-top:var(--space-3);text-align:right;font-size:var(--text-sm);color:var(--color-text-muted)">
-        Semester GPA: <strong id="sem-${i}-gpa">0.00</strong>
-      </div>`;
-    container.appendChild(div);
-    addCourseRow(i);
-    addCourseRow(i);
-  }
-}
-
-function addCourseRow(semester) {
-  const tbody = document.getElementById('sem-' + semester + '-body');
-  if (!tbody) return;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input type="text" placeholder="Course" oninput="recalcSemester(${semester})" style="width:100%;padding:var(--space-1) var(--space-2);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-offset)"></td>
-    <td><input type="number" min="1" max="5" value="3" oninput="recalcSemester(${semester})" style="width:100%;padding:var(--space-1) var(--space-2);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-offset)"></td>
-    <td>
-      <select onchange="recalcSemester(${semester})" style="width:100%;padding:var(--space-1) var(--space-2);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-offset)">
-        <option value="A">A</option><option value="B">B</option><option value="C" selected>C</option>
-        <option value="D">D</option><option value="E">E</option><option value="F">F</option>
-      </select>
-    </td>
-    <td style="text-align:center" class="cgpa-gp">3.0</td>
-    <td><button style="color:var(--color-error);border:none;background:none;cursor:pointer" onclick="this.closest('tr').remove();recalcSemester(${semester});calculateOverallCGPA()">✕</button></td>`;
-  tbody.appendChild(tr);
-  recalcSemester(semester);
-}
-
-function recalcSemester(semester) {
-  const tbody = document.getElementById('sem-' + semester + '-body');
-  if (!tbody) return;
-  let totalPoints = 0, totalCredits = 0;
-  tbody.querySelectorAll('tr').forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    const selects = row.querySelectorAll('select');
-    const credit = parseFloat(inputs[1]?.value) || 0;
-    const grade = selects[0]?.value || 'C';
-    const gp = GRADE_POINTS[grade] || 0;
-    const gpEl = row.querySelector('.cgpa-gp');
-    if (gpEl) gpEl.textContent = gp.toFixed(1);
-    totalPoints += gp * credit;
-    totalCredits += credit;
-  });
-  const gpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
-  const gpaEl = document.getElementById('sem-' + semester + '-gpa');
-  if (gpaEl) gpaEl.textContent = gpa.toFixed(2);
-  calculateOverallCGPA();
-}
-
-function calculateOverallCGPA() {
-  const semesterCards = document.querySelectorAll('.semester-card');
-  let totalPoints = 0, totalCredits = 0;
-  semesterCards.forEach(card => {
-    card.querySelectorAll('tbody tr').forEach(row => {
-      const inputs = row.querySelectorAll('input');
-      const selects = row.querySelectorAll('select');
-      const credit = parseFloat(inputs[1]?.value) || 0;
-      const grade = selects[0]?.value || 'C';
-      totalPoints += (GRADE_POINTS[grade] || 0) * credit;
-      totalCredits += credit;
-    });
-  });
-  const cgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
-  const cls = cgpa >= 4.5 ? 'cgpa-class-1' : cgpa >= 3.5 ? 'cgpa-class-2-1' : cgpa >= 2.5 ? 'cgpa-class-2-2' : cgpa >= 1.5 ? 'cgpa-class-3' : 'cgpa-class-3';
-  const label = cgpa >= 4.5 ? 'First Class' : cgpa >= 3.5 ? 'Second Class Upper' : cgpa >= 2.5 ? 'Second Class Lower' : cgpa >= 1.5 ? 'Third Class' : 'Pass';
-  const container = document.getElementById('cgpaResults');
-  if (!container) return;
-  container.innerHTML = `
-    <div class="cgpa-result-card">
-      <div class="cgpa-result-grid">
-        <div class="cgpa-result-item"><div class="label">Total Credits</div><div class="value">${totalCredits}</div></div>
-        <div class="cgpa-result-item"><div class="label">Total Quality Points</div><div class="value">${totalPoints.toFixed(2)}</div></div>
-        <div class="cgpa-result-item"><div class="label">CGPA</div><div class="value ${cls}">${cgpa.toFixed(2)}</div></div>
-        <div class="cgpa-result-item"><div class="label">Classification</div><div class="value ${cls}">${label}</div></div>
-      </div>
-    </div>`;
-}
-
-/* ══════════════════════════════════════════════════
-   NIFES Study Hub — Main Application
-   ══════════════════════════════════════════════════ */
-
-/* ─── Supabase Config ─────────────────────────────── */
-/* TODO: Replace with your Supabase credentials
-   1. Go to supabase.com → create free project
-   2. Settings → API → copy Project URL & anon key
-   3. Paste below */
-const SUPABASE_URL = 'https://your-project.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key';
 
 /* ─── State ──────────────────────────────────────── */
-let questions = [];
-let materials = [];
-let currentLevel = '';
-let searchVisible = false;
-let studyModeActive = false;
-let currentUser = null;
+var questions = [];
+var materials = [];
+var currentLevel = '';
+var searchVisible = false;
+var studyModeActive = false;
+var currentUser = null;
 
-/* Quiz state */
-let quizQuestions = [];
-let quizIndex = 0;
-let quizScore = 0;
-let quizMissed = [];
-let quizTotal = 0;
-let quizActive = false;
+var quizQuestions = [];
+var quizIndex = 0;
+var quizScore = 0;
+var quizMissed = [];
+var quizTotal = 0;
+var quizActive = false;
 
 /* ─── Init ────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async function() {
@@ -361,18 +36,19 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 /* ─── Data Loading ────────────────────────────────── */
 async function loadAllData() {
-  const [qRes, mRes] = await Promise.all([dbFetchQuestions(), dbFetchMaterials()]);
-  if (qRes.success) questions = qRes.data;
-  if (mRes.success) materials = mRes.data;
+  var results = await Promise.all([dbFetchQuestions(), dbFetchMaterials()]);
+  if (results[0].success && results[0].data.length) questions = results[0].data;
+  else questions = SEED_QUESTIONS;
+  if (results[1].success) materials = results[1].data;
 }
 
 async function refreshQuestions() {
-  const res = await dbFetchQuestions();
+  var res = await dbFetchQuestions();
   if (res.success) questions = res.data;
 }
 
 async function refreshMaterials() {
-  const res = await dbFetchMaterials();
+  var res = await dbFetchMaterials();
   if (res.success) materials = res.data;
 }
 
@@ -396,7 +72,7 @@ function navigate(view) {
   if (view === 'practice') initPracticeView();
   if (view === 'calculator') initCalculatorView();
   if (view === 'cgpa') initCGPAView();
-
+  if (view === 'materials') renderMaterialsView();
   updateBadges();
 }
 
@@ -551,7 +227,6 @@ function renderDashboard() {
       '<div class="course-code">' + (c.code || '') + '</div>' +
       '<div class="course-meta"><span class="course-meta-item">' + years + '</span></div></div>';
   }).join('');
-
   renderDashboardMaterials();
 }
 
@@ -620,7 +295,9 @@ function renderPQItem(q) {
   if (q.topic) tags += '<span class="tag tag-topic">' + q.topic + '</span>';
   if (q.type) tags += '<span class="tag tag-type">' + q.type + '</span>';
 
-  var answerHtml = q.answer ? showAnsBtn + '<div class="pq-answer" id="ans-' + q.id + '">' + q.answer.replace(/\n/g, '<br>') + '</div>' : '';
+  var mcqHtml = renderMCQOptions(q);
+  var answerContent = mcqHtml || q.answer.replace(/\n/g, '<br>');
+  var answerHtml = q.answer ? showAnsBtn + '<div class="pq-answer" id="ans-' + q.id + '">' + answerContent + '</div>' : '';
 
   return '<div class="pq-item" id="pq-' + q.id + '">' +
     '<div class="pq-item-header"><div class="pq-meta">' + tags + '</div>' +
@@ -660,8 +337,18 @@ function renderLevelMaterials(level) {
   if (!container) return;
   var levelMats = materials.filter(function(m) { return m.level === level; });
   if (!levelMats.length) { container.innerHTML = ''; return; }
-  container.innerHTML = '<h2 class="section-heading" style="margin-top:var(--space-8)">Course Materials</h2>' +
-    '<div class="material-grid">' + levelMats.map(renderMaterialCard).join('') + '</div>';
+  var pqPdfs = levelMats.filter(function(m) { return m.type === 'Past Question PDF'; });
+  var others = levelMats.filter(function(m) { return m.type !== 'Past Question PDF'; });
+  var html = '';
+  if (pqPdfs.length) {
+    html += '<h2 class="section-heading" style="margin-top:var(--space-8)">Past Question PDFs</h2>' +
+      '<div class="material-grid">' + pqPdfs.map(renderMaterialCard).join('') + '</div>';
+  }
+  if (others.length) {
+    html += '<h2 class="section-heading" style="margin-top:var(--space-8)">Other Materials</h2>' +
+      '<div class="material-grid">' + others.map(renderMaterialCard).join('') + '</div>';
+  }
+  container.innerHTML = html;
 }
 
 function renderMaterialCard(m) {
@@ -691,9 +378,41 @@ function formatFileSize(bytes) {
 }
 
 /* ─── Add Question ────────────────────────────────── */
+function onTypeChange() {
+  var type = document.getElementById('fType').value;
+  var mcqDiv = document.getElementById('mcqOptions');
+  var answerGroup = document.getElementById('answerGroup');
+  if (type === 'MCQ') {
+    mcqDiv.style.display = 'block';
+    answerGroup.style.display = 'none';
+    document.getElementById('fAnswer').removeAttribute('required');
+  } else {
+    mcqDiv.style.display = 'none';
+    answerGroup.style.display = '';
+  }
+}
+
 async function handleAddQuestion(e) {
   e.preventDefault();
   if (!currentUser) { openAuthModal(); return; }
+
+  var type = document.getElementById('fType').value;
+  var answer;
+  if (type === 'MCQ') {
+    var options = {};
+    options.A = document.getElementById('fOptA').value.trim();
+    options.B = document.getElementById('fOptB').value.trim();
+    options.C = document.getElementById('fOptC').value.trim();
+    options.D = document.getElementById('fOptD').value.trim();
+    var correct = document.getElementById('fCorrect').value;
+    if (!options.A || !options.B || !options.C || !options.D || !correct) {
+      showToast('error', 'Please fill all MCQ options and select the correct answer.');
+      return;
+    }
+    answer = JSON.stringify({ correct: correct, options: options });
+  } else {
+    answer = document.getElementById('fAnswer').value.trim();
+  }
 
   var q = {
     level: document.getElementById('fLevel').value,
@@ -701,20 +420,182 @@ async function handleAddQuestion(e) {
     code: document.getElementById('fCode').value.trim(),
     year: document.getElementById('fYear').value.trim(),
     topic: document.getElementById('fTopic').value.trim(),
-    type: document.getElementById('fType').value,
+    type: type,
     question: document.getElementById('fQuestion').value.trim(),
-    answer: document.getElementById('fAnswer').value.trim(),
+    answer: answer,
   };
 
   var res = await dbAddQuestion(q);
   if (res.success) {
     e.target.reset();
+    onTypeChange();
     showToast('success', 'Question added successfully!');
     await refreshQuestions();
     updateBadges();
   } else {
     showToast('error', res.error || 'Failed to add question.');
   }
+}
+
+/* ─── PDF Extract ──────────────────────────────────── */
+var extractedQuestions = [];
+
+function handleExtractFileSelect(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('extractDropZone').classList.add('has-file');
+  document.getElementById('extractFileInfo').textContent = file.name;
+}
+
+async function handleExtractPDF(e) {
+  e.preventDefault();
+  var file = document.getElementById('extractFile').files[0];
+  var level = document.getElementById('eLevel').value;
+  var course = document.getElementById('eCourse').value.trim();
+  var code = document.getElementById('eCode').value.trim();
+  var year = document.getElementById('eYear').value.trim();
+
+  if (!file) { showToast('error', 'Please select a PDF file.'); return; }
+  if (!level || !course) { showToast('error', 'Please fill level and course.'); return; }
+
+  var btn = document.getElementById('extractBtn');
+  btn.disabled = true;
+  btn.textContent = 'Extracting…';
+
+  try {
+    var formData = new FormData();
+    formData.append('pdf', file);
+
+    var res = await fetch(SERVER_URL + '/api/extract', { method: 'POST', body: formData });
+    var data = await res.json();
+
+    if (!data.success) throw new Error(data.error || 'Extraction failed');
+
+    extractedQuestions = data.questions.map(function(q) {
+      q._level = level;
+      q._course = course;
+      q._code = code;
+      q._year = year;
+      return q;
+    });
+
+    renderExtractedResults(data);
+  } catch (err) {
+    showToast('error', 'Extraction error: ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Extract Questions';
+}
+
+function renderExtractedResults(data) {
+  var container = document.getElementById('extractResults');
+  container.style.display = 'block';
+
+  document.getElementById('extractSummary').innerHTML =
+    '<span>📄 <strong>' + data.fileName + '</strong> — ' + data.questionsCount + ' question' + (data.questionsCount !== 1 ? 's' : '') + ' detected</span>';
+
+  var list = document.getElementById('extractedQuestions');
+  list.innerHTML = data.questions.map(function(q, i) {
+    var typeClass = q.type || 'Theory';
+    var optionsHtml = '';
+    var answerHtml = '';
+
+    if (q.type === 'MCQ' && q.options) {
+      var labels = ['A', 'B', 'C', 'D'];
+      optionsHtml = '<div class="extract-options">';
+      labels.forEach(function(l) {
+        var val = q.options[l] || '';
+        optionsHtml += '<div class="extract-option">' +
+          '<span class="extract-option-label">' + l + '.</span>' +
+          '<input class="extract-option-input" id="eopt-' + i + '-' + l + '" value="' + val.replace(/"/g, '&quot;') + '">' +
+          '</div>';
+      });
+      optionsHtml += '</div>' +
+        '<div style="margin-bottom:var(--space-2);font-size:var(--text-sm)">Correct answer: ' +
+        '<select class="extract-correct-select" id="ecorrect-' + i + '">' +
+        '<option value="">—</option>' +
+        '<option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>' +
+        '</select></div>';
+    } else {
+      answerHtml = '<textarea class="extract-answer-input" id="eanswer-' + i + '" placeholder="Enter answer / solution (optional)" rows="2">' + (q.answer || '') + '</textarea>';
+    }
+
+    return '<div class="extract-item">' +
+      '<div class="extract-item-header">' +
+      '<span class="extract-item-num">Question ' + (i + 1) + '</span>' +
+      '<span class="extract-item-type ' + typeClass + '">' + typeClass + '</span>' +
+      '</div>' +
+      '<textarea class="extract-question-text" id="eqtext-' + i + '" style="width:100%;min-height:60px" rows="2">' + q.question + '</textarea>' +
+      optionsHtml + answerHtml +
+      '<div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:var(--space-2)">' +
+      '<label><input type="checkbox" checked id="einclude-' + i + '"> Include in save</label></div>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('extractSaveActions').style.display = 'flex';
+  container.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function saveExtractedQuestions() {
+  var toSave = [];
+  var summary = document.getElementById('extractSummary');
+
+  extractedQuestions.forEach(function(q, i) {
+    var include = document.getElementById('einclude-' + i);
+    if (include && !include.checked) return;
+
+    var questionText = document.getElementById('eqtext-' + i)?.value.trim();
+    if (!questionText) return;
+
+    var answer = '';
+    if (q.type === 'MCQ') {
+      var options = {};
+      ['A', 'B', 'C', 'D'].forEach(function(l) {
+        var optEl = document.getElementById('eopt-' + i + '-' + l);
+        if (optEl) options[l] = optEl.value.trim();
+      });
+      var correct = document.getElementById('ecorrect-' + i)?.value || '';
+      answer = JSON.stringify({ correct: correct, options: options });
+    } else {
+      answer = document.getElementById('eanswer-' + i)?.value.trim() || '';
+    }
+
+    toSave.push({
+      level: q._level,
+      course: q._course,
+      code: q._code || '',
+      year: q._year || '',
+      topic: '',
+      type: q.type || 'Theory',
+      question: questionText,
+      answer: answer,
+    });
+  });
+
+  if (!toSave.length) { showToast('error', 'No questions selected to save.'); return; }
+
+  var saved = 0;
+  for (var i = 0; i < toSave.length; i++) {
+    var res = await dbAddQuestion(toSave[i]);
+    if (res.success) saved++;
+  }
+
+  showToast('success', saved + ' of ' + toSave.length + ' questions saved!');
+  if (saved > 0) {
+    await refreshQuestions();
+    updateBadges();
+  }
+  resetExtract();
+}
+
+function resetExtract() {
+  extractedQuestions = [];
+  document.getElementById('extractResults').style.display = 'none';
+  document.getElementById('extractSaveActions').style.display = 'none';
+  document.getElementById('extractForm').reset();
+  document.getElementById('extractDropZone').classList.remove('has-file');
+  document.getElementById('extractFileInfo').textContent = '';
 }
 
 /* ─── Material Upload ─────────────────────────────── */
@@ -826,11 +707,8 @@ function startQuiz() {
   pool = shuffleArray(pool);
   var count = qCount === 'all' ? pool.length : Math.min(parseInt(qCount), pool.length);
   quizQuestions = pool.slice(0, count);
-  quizIndex = 0;
-  quizScore = 0;
-  quizMissed = [];
-  quizTotal = quizQuestions.length;
-  quizActive = true;
+  quizIndex = 0; quizScore = 0; quizMissed = [];
+  quizTotal = quizQuestions.length; quizActive = true;
 
   document.getElementById('quizSetup').style.display = 'none';
   document.getElementById('quizEngine').style.display = 'block';
@@ -840,17 +718,18 @@ function startQuiz() {
 
 function showQuizQuestion() {
   if (quizIndex >= quizTotal) { showQuizResults(); return; }
-
   var q = quizQuestions[quizIndex];
+
   document.getElementById('quizProgress').textContent = 'Question ' + (quizIndex + 1) + ' of ' + quizTotal;
   document.getElementById('quizProgressFill').style.width = ((quizIndex / quizTotal) * 100) + '%';
   document.getElementById('quizQuestionNum').textContent = 'Question ' + (quizIndex + 1);
   document.getElementById('quizLevelBadge').textContent = q.level + 'L · ' + q.course;
-  document.getElementById('quizQuestionText').textContent = q.question;
+  document.getElementById('quizQuestionText').innerHTML = q.question;
 
+  var mcqHtml = renderMCQOptions(q);
   var ansSection = document.getElementById('quizAnswerSection');
   ansSection.classList.remove('show');
-  document.getElementById('quizAnswerBox').innerHTML = q.answer.replace(/\n/g, '<br>');
+  document.getElementById('quizAnswerBox').innerHTML = mcqHtml || q.answer.replace(/\n/g, '<br>');
   document.getElementById('quizShowBtn').style.display = '';
   document.getElementById('quizGotIt').style.display = 'none';
   document.getElementById('quizMissedIt').style.display = 'none';
@@ -886,8 +765,9 @@ function showQuizResults() {
   if (quizMissed.length) {
     missedContainer.innerHTML = '<h3 style="margin-bottom:var(--space-4)">Missed Questions (' + quizMissed.length + ')</h3>' +
       quizMissed.map(function(q, i) {
+        var renderedAns = renderMCQOptions(q) || q.answer.replace(/\n/g, '<br>');
         return '<div class="quiz-missed-item"><p><strong>' + (i + 1) + '.</strong> ' + q.question + '</p>' +
-          '<div class="quiz-missed-answer"><strong>Answer:</strong> ' + q.answer.replace(/\n/g, '<br>') + '</div></div>';
+          '<div class="quiz-missed-answer"><strong>Answer:</strong> ' + renderedAns + '</div></div>';
       }).join('');
   } else {
     missedContainer.innerHTML = '<p style="color:var(--color-success);font-size:var(--text-base)">Perfect score! No missed questions.</p>';
@@ -908,7 +788,7 @@ function showQuizResults() {
 
 function retryMissed() {
   if (!quizMissed.length) return;
-  quizQuestions = shuffleArray([...quizMissed]);
+  quizQuestions = shuffleArray([].concat(quizMissed));
   quizIndex = 0; quizScore = 0; quizMissed = [];
   quizTotal = quizQuestions.length; quizActive = true;
   document.getElementById('quizResults').style.display = 'none';
@@ -919,12 +799,35 @@ function retryMissed() {
 function newTest() { initPracticeView(); }
 
 function shuffleArray(arr) {
-  var a = [...arr];
+  var a = [].concat(arr);
   for (var i = a.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
     var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
   }
   return a;
+}
+
+/* ─── Materials View ──────────────────────────────── */
+function renderMaterialsView() {
+  var pqMats = materials.filter(function(m) { return m.type === 'Past Question PDF'; });
+  var otherMats = materials.filter(function(m) { return m.type !== 'Past Question PDF'; });
+
+  document.getElementById('pqMatsGrid').innerHTML = pqMats.map(renderMaterialCard).join('') ||
+    '<div class="empty-state" style="grid-column:1/-1"><h3>No past question PDFs yet</h3><p>Upload PQs from the Contribute page.</p></div>';
+  document.getElementById('otherMatsGrid').innerHTML = otherMats.map(renderMaterialCard).join('') ||
+    '<div class="empty-state" style="grid-column:1/-1"><h3>No other materials yet</h3><p>Upload lecture notes and textbooks from the Contribute page.</p></div>';
+
+  document.getElementById('pqMatsCount').textContent = pqMats.length + ' file' + (pqMats.length !== 1 ? 's' : '');
+  document.getElementById('otherMatsCount').textContent = otherMats.length + ' file' + (otherMats.length !== 1 ? 's' : '');
+  document.getElementById('materialsSubtitle').textContent = pqMats.length + otherMats.length + ' files across all levels.';
+}
+
+function switchMaterialsTab(tab) {
+  document.querySelectorAll('#view-materials .tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('#view-materials .tab-content').forEach(function(c) { c.classList.remove('active'); });
+  var tabBtn = document.querySelector('#view-materials .tab[data-tab="' + tab + '"]');
+  if (tabBtn) tabBtn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
 }
 
 /* ─── Search ──────────────────────────────────────── */
@@ -956,6 +859,8 @@ function updateBadges() {
     var el = document.getElementById('badge-' + l);
     if (el) el.textContent = n;
   });
+  var matsEl = document.getElementById('badge-materials');
+  if (matsEl) matsEl.textContent = materials.length;
 }
 
 /* ─── Toast ───────────────────────────────────────── */

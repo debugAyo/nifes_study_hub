@@ -66,5 +66,14 @@ insert into questions (level, course, code, year, topic, type, question, answer)
  'Transfer function: ratio of Laplace transform of output to input, assuming zero initial conditions. Assumptions: 1) System is linear, 2) Initial conditions are zero, 3) System is time-invariant.'),
 
 ('300', 'Thermodynamics', 'MEE 302', '2024', 'Second Law', 'Theory',
- 'State the Kelvin-Planck and Clausius statements of the Second Law of Thermodynamics and show their equivalence.',
- 'Kelvin-Planck: Impossible to construct a cycle heat engine that produces no effect other than heat from a single reservoir and work. Clausius: Impossible to construct a cycle device that transfers heat from cooler to hotter body with no other effect. Violation of one implies violation of the other.');
+  'State the Kelvin-Planck and Clausius statements of the Second Law of Thermodynamics and show their equivalence.',
+  'Kelvin-Planck: Impossible to construct a cycle heat engine that produces no effect other than heat from a single reservoir and work. Clausius: Impossible to construct a cycle device that transfers heat from cooler to hotter body with no other effect. Violation of one implies violation of the other.'),
+
+-- MCQ sample questions
+('100', 'General Studies', 'GST 101', '2024', 'Logical Reasoning', 'MCQ',
+  'If all A are B, and some B are C, which conclusion is valid?',
+  '{"correct":"B","options":{"A":"All A are C","B":"Some B are A","C":"No C is A","D":"All C are B"}}'),
+
+('100', 'Engineering Mathematics', 'MTH 101', '2024', 'Algebra', 'MCQ',
+  'What is the value of log₁₀(1000)?',
+  '{"correct":"C","options":{"A":"1","B":"2","C":"3","D":"4"}}');
