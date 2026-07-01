@@ -1,0 +1,56 @@
+You are extending an existing single-file HTML app called nifes-study-hub.html. The app is a past questions (PQ) study hub for Nigerian university students (100–300 level). It already has: a dashboard, sidebar navigation, PQ list view with filters, an Add Question form, search, and dark/light mode toggle.
+
+Add the following three features without breaking any existing functionality:
+
+1. Practice Test / Quiz Mode
+
+Add a new nav item called "Practice Test" that opens a quiz view.
+
+User selects: Level (100/200/300), Course (dropdown populated from questions data), Number of questions (5, 10, 15, or All), and Question Type filter (optional).
+
+Quiz renders one question at a time. No answer visible initially.
+
+User clicks "Show Answer" to reveal the worked solution, then clicks either "Got it ✓" or "Missed it ✗" to move to the next question.
+
+At the end, show a results summary screen: score (e.g. 7/10), percentage, list of missed questions with their answers, and a "Retry Missed" button and "New Test" button.
+
+Track session score in memory (no localStorage).
+
+2. PDF & Course Material Upload per Course
+
+In the Add Question view, add a second tab: "Upload Material".
+
+User fills: Level, Course name, Course Code, Material title, Material type (Past Question PDF / Lecture Note / Textbook / Other).
+
+User selects a PDF or image file using a file input (accept=".pdf,.png,.jpg,.jpeg").
+
+The file is read using FileReader and stored as a base64 data URL in a materials array in memory.
+
+Add a "Course Materials" section to the Dashboard and to each level's PQ view showing uploaded materials as cards.
+
+Each material card shows: title, type tag, course name, and a "View" button that opens the file in a new tab using window.open(dataURL) and a "Download" button that triggers download via a blob URL.
+
+3. Study Mode
+
+Add a toggle button ("Study Mode") on the PQ list view toolbar.
+
+When Study Mode is ON: all answers are hidden by default and the "Show Answer" button becomes "Reveal Answer" styled in amber/gold colour.
+
+When Study Mode is OFF (default): behaviour is unchanged (answers can be toggled normally).
+
+Show a small banner at the top of the PQ list when Study Mode is active: "📖 Study Mode — answers hidden. Reveal one at a time."
+
+General rules:
+
+if it require ackend let e know 
+All state lives in JS variables (questions, materials, etc.) already defined in the file.
+
+Maintain the existing Nexus design system (CSS variables, spacing tokens, radius tokens, dark/light mode).
+
+All new UI must be mobile-responsive (375px+).
+
+Follow the existing nav pattern: add new nav items to both the desktop sidebar and the mobile bottom nav (or overflow gracefully).
+
+Do not remove or rename any existing functions — only extend.
+
+

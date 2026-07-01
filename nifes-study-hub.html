@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIFES Study Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300..700&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="light"]{
+  --color-bg:#f7f6f2;--color-surface:#f9f8f5;--color-surface-2:#fbfbf9;
+  --color-surface-offset:#f3f0ec;--color-surface-dynamic:#e6e4df;
+  --color-divider:#dcd9d5;--color-border:#d4d1ca;
+  --color-text:#28251d;--color-text-muted:#7a7974;--color-text-faint:#bab9b4;
+  --color-text-inverse:#f9f8f4;
+  --color-primary:#01696f;--color-primary-hover:#0c4e54;
+  --color-primary-active:#0f3638;--color-primary-highlight:#cedcd8;
+  --color-success:#437a22;--color-success-highlight:#d4dfcc;
+  --color-warning:#964219;--color-warning-highlight:#ddcfc6;
+  --color-error:#a12c7b;--color-error-highlight:#e0ced7;
+  --color-gold:#d19900;--color-gold-highlight:#e9e0c6;
+  --radius-sm:0.375rem;--radius-md:0.5rem;--radius-lg:0.75rem;
+  --radius-xl:1rem;--radius-full:9999px;
+  --shadow-sm:0 1px 2px oklch(0.2 0.01 80/0.06);
+  --shadow-md:0 4px 12px oklch(0.2 0.01 80/0.08);
+  --shadow-lg:0 12px 32px oklch(0.2 0.01 80/0.12);
+  --transition-interactive:180ms cubic-bezier(0.16,1,0.3,1);
+  --text-xs:clamp(0.75rem,0.7rem + 0.25vw,0.875rem);
+  --text-sm:clamp(0.875rem,0.8rem + 0.35vw,1rem);
+  --text-base:clamp(1rem,0.95rem + 0.25vw,1.125rem);
+  --text-lg:clamp(1.125rem,1rem + 0.75vw,1.5rem);
+  --text-xl:clamp(1.5rem,1.2rem + 1.25vw,2.25rem);
+  --text-2xl:clamp(2rem,1.2rem + 2.5vw,3.5rem);
+  --font-display:"Instrument Serif",Georgia,serif;
+  --font-body:"DM Sans","Helvetica Neue",sans-serif;
+  --space-1:.25rem;--space-2:.5rem;--space-3:.75rem;--space-4:1rem;
+  --space-5:1.25rem;--space-6:1.5rem;--space-8:2rem;--space-10:2.5rem;
+  --space-12:3rem;--space-16:4rem;
+  --content-default:960px;--content-wide:1200px;
+}
+[data-theme="dark"]{
+  --color-bg:#171614;--color-surface:#1c1b19;--color-surface-2:#201f1d;
+  --color-surface-offset:#1d1c1a;--color-surface-dynamic:#2d2c2a;
+  --color-divider:#262523;--color-border:#393836;
+  --color-text:#cdccca;--color-text-muted:#797876;--color-text-faint:#5a5957;
+  --color-text-inverse:#2b2a28;
+  --color-primary:#4f98a3;--color-primary-hover:#227f8b;
+  --color-primary-active:#1a626b;--color-primary-highlight:#313b3b;
+  --color-success:#6daa45;--color-success-highlight:#3a4435;
+  --color-warning:#bb653b;--color-warning-highlight:#564942;
+  --color-error:#d163a7;--color-error-highlight:#4c3d46;
+  --color-gold:#e8af34;--color-gold-highlight:#4d4332;
+  --shadow-sm:0 1px 2px oklch(0 0 0/0.2);
+  --shadow-md:0 4px 12px oklch(0 0 0/0.3);
+  --shadow-lg:0 12px 32px oklch(0 0 0/0.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth;scroll-padding-top:var(--space-16)}
+body{min-height:100dvh;line-height:1.6;font-family:var(--font-body);font-size:var(--text-base);color:var(--color-text);background:var(--color-bg)}
+img,picture,svg{display:block;max-width:100%;height:auto}
+ul[role="list"],ol[role="list"]{list-style:none}
+input,button,textarea,select{font:inherit;color:inherit}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.15}
+p,li{text-wrap:pretty;max-width:72ch}
+button{cursor:pointer;background:none;border:none}
+a,button,[role="button"],input,textarea,select{transition:color var(--transition-interactive),background var(--transition-interactive),border-color var(--transition-interactive),box-shadow var(--transition-interactive)}
+:focus-visible{outline:2px solid var(--color-primary);outline-offset:3px;border-radius:var(--radius-sm)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+
+/* Layout */
+.app{display:grid;grid-template-columns:260px 1fr;grid-template-rows:auto 1fr;min-height:100dvh}
+@media(max-width:768px){.app{grid-template-columns:1fr}}
+
+/* Header */
+.header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:var(--space-3) var(--space-6);border-bottom:1px solid var(--color-border);background:var(--color-surface);position:sticky;top:0;z-index:50;gap:var(--space-4)}
+.logo{display:flex;align-items:center;gap:var(--space-2);text-decoration:none;color:var(--color-text)}
+.logo-mark{width:32px;height:32px;flex-shrink:0}
+.logo-text{font-family:var(--font-display);font-size:var(--text-lg);font-weight:400;color:var(--color-text)}
+.logo-text span{color:var(--color-primary)}
+.header-actions{display:flex;align-items:center;gap:var(--space-2)}
+.btn-icon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);color:var(--color-text-muted);transition:background var(--transition-interactive),color var(--transition-interactive)}
+.btn-icon:hover{background:var(--color-surface-offset);color:var(--color-text)}
+
+/* Search */
+.search-wrap{position:relative;flex:1;max-width:380px}
+.search-wrap svg{position:absolute;left:var(--space-3);top:50%;transform:translateY(-50%);color:var(--color-text-faint);pointer-events:none}
+.search-input{width:100%;padding:var(--space-2) var(--space-3) var(--space-2) calc(var(--space-3)*2 + 16px);background:var(--color-surface-offset);border:1px solid var(--color-border);border-radius:var(--radius-full);font-size:var(--text-sm);color:var(--color-text);outline:none}
+.search-input::placeholder{color:var(--color-text-faint)}
+.search-input:focus{border-color:var(--color-primary);background:var(--color-surface)}
+
+/* Sidebar */
+.sidebar{background:var(--color-surface);border-right:1px solid var(--color-border);padding:var(--space-4) 0;overflow-y:auto;position:sticky;top:57px;height:calc(100dvh - 57px)}
+@media(max-width:768px){.sidebar{display:none}}
+.nav-section{padding:0 var(--space-3);margin-bottom:var(--space-6)}
+.nav-section-title{font-size:var(--text-xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-faint);padding:var(--space-2) var(--space-3);margin-bottom:var(--space-1)}
+.nav-item{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) var(--space-3);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-text-muted);cursor:pointer;text-decoration:none;transition:background var(--transition-interactive),color var(--transition-interactive);border:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--color-surface-offset);color:var(--color-text)}
+.nav-item.active{background:var(--color-primary-highlight);color:var(--color-primary)}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:var(--color-surface-dynamic);color:var(--color-text-muted);font-size:var(--text-xs);padding:1px 7px;border-radius:var(--radius-full);font-weight:500}
+
+/* Main */
+.main{padding:var(--space-6) var(--space-8);overflow-y:auto}
+@media(max-width:768px){.main{padding:var(--space-4)}}
+
+/* View container */
+.view{display:none}
+.view.active{display:block}
+
+/* Dashboard */
+.page-title{font-family:var(--font-display);font-size:var(--text-xl);font-weight:400;color:var(--color-text);margin-bottom:var(--space-1)}
+.page-subtitle{font-size:var(--text-sm);color:var(--color-text-muted);margin-bottom:var(--space-8)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--space-4);margin-bottom:var(--space-8)}
+.kpi{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);box-shadow:var(--shadow-sm)}
+.kpi-label{font-size:var(--text-xs);font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:var(--space-2)}
+.kpi-value{font-size:var(--text-xl);font-weight:700;font-variant-numeric:tabular-nums;color:var(--color-text);line-height:1}
+.kpi-sub{font-size:var(--text-xs);color:var(--color-text-muted);margin-top:var(--space-1)}
+.kpi.green{border-top:3px solid var(--color-success)}
+.kpi.teal{border-top:3px solid var(--color-primary)}
+.kpi.gold{border-top:3px solid var(--color-gold)}
+.kpi.warn{border-top:3px solid var(--color-warning)}
+
+.section-heading{font-size:var(--text-lg);font-weight:600;color:var(--color-text);margin-bottom:var(--space-4)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--space-4);margin-bottom:var(--space-8)}
+.course-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);cursor:pointer;box-shadow:var(--shadow-sm);transition:box-shadow var(--transition-interactive),transform var(--transition-interactive)}
+.course-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.course-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--space-3)}
+.course-chip{display:inline-block;padding:2px var(--space-3);border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600}
+.chip-100{background:var(--color-primary-highlight);color:var(--color-primary)}
+.chip-200{background:var(--color-gold-highlight);color:var(--color-gold)}
+.chip-300{background:var(--color-warning-highlight);color:var(--color-warning)}
+.course-pq-count{font-size:var(--text-xs);color:var(--color-text-muted);background:var(--color-surface-offset);padding:2px var(--space-2);border-radius:var(--radius-sm)}
+.course-title{font-size:var(--text-base);font-weight:600;color:var(--color-text);margin-bottom:var(--space-1)}
+.course-code{font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-3)}
+.course-meta{display:flex;align-items:center;gap:var(--space-4);font-size:var(--text-xs);color:var(--color-text-muted)}
+.course-meta-item{display:flex;align-items:center;gap:var(--space-1)}
+.btn-primary{display:inline-flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-5);background:var(--color-primary);color:white;border-radius:var(--radius-md);font-size:var(--text-sm);font-weight:500;cursor:pointer;border:none;text-decoration:none;transition:background var(--transition-interactive)}
+.btn-primary:hover{background:var(--color-primary-hover)}
+.btn-ghost{display:inline-flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-text-muted);cursor:pointer;background:none;transition:all var(--transition-interactive)}
+.btn-ghost:hover{background:var(--color-surface-offset);color:var(--color-text);border-color:var(--color-text-muted)}
+
+/* PQ list view */
+.filter-bar{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-6)}
+.filter-select{padding:var(--space-2) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);font-size:var(--text-sm);color:var(--color-text);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--color-primary)}
+.pq-list{display:flex;flex-direction:column;gap:var(--space-3)}
+.pq-item{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);box-shadow:var(--shadow-sm);cursor:pointer;transition:box-shadow var(--transition-interactive)}
+.pq-item:hover{box-shadow:var(--shadow-md)}
+.pq-item-header{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-3)}
+.pq-meta{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+.tag{display:inline-block;padding:2px var(--space-2);border-radius:var(--radius-sm);font-size:var(--text-xs);font-weight:500}
+.tag-year{background:var(--color-primary-highlight);color:var(--color-primary)}
+.tag-topic{background:var(--color-surface-offset);color:var(--color-text-muted)}
+.tag-type{background:var(--color-gold-highlight);color:var(--color-gold)}
+.pq-question{font-size:var(--text-base);color:var(--color-text);line-height:1.7;margin-bottom:var(--space-3)}
+.pq-answer-toggle{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--color-primary);background:none;border:none;cursor:pointer;padding:0;font-weight:500}
+.pq-answer-toggle:hover{color:var(--color-primary-hover)}
+.pq-answer{display:none;margin-top:var(--space-4);padding:var(--space-4);background:var(--color-success-highlight);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-text);line-height:1.8;border-left:3px solid var(--color-success)}
+.pq-answer.show{display:block}
+
+/* Add PQ form */
+.form-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6);box-shadow:var(--shadow-sm);max-width:640px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-4)}
+.form-label{font-size:var(--text-sm);font-weight:500;color:var(--color-text-muted)}
+.form-input,.form-textarea,.form-select{padding:var(--space-3) var(--space-4);background:var(--color-surface-offset);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-text);outline:none;transition:border-color var(--transition-interactive)}
+.form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--color-primary);background:var(--color-surface)}
+.form-textarea{resize:vertical;min-height:120px}
+.form-hint{font-size:var(--text-xs);color:var(--color-text-faint)}
+.form-actions{display:flex;gap:var(--space-3);margin-top:var(--space-2)}
+.success-toast{display:none;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);background:var(--color-success-highlight);border:1px solid var(--color-success);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-success);margin-bottom:var(--space-4)}
+.success-toast.show{display:flex}
+
+/* Back button */
+.back-btn{display:inline-flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--color-text-muted);cursor:pointer;background:none;border:none;margin-bottom:var(--space-4);padding:var(--space-2) 0}
+.back-btn:hover{color:var(--color-text)}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:var(--space-16) var(--space-8);color:var(--color-text-muted)}
+.empty-state-icon{width:48px;height:48px;margin-bottom:var(--space-4);color:var(--color-text-faint)}
+.empty-state h3{color:var(--color-text);margin-bottom:var(--space-2)}
+.empty-state p{max-width:36ch;margin-bottom:var(--space-6)}
+
+/* Mobile nav */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--color-surface);border-top:1px solid var(--color-border);padding:var(--space-2) var(--space-4);z-index:50;grid-template-columns:repeat(4,1fr)}
+@media(max-width:768px){.mobile-nav{display:grid}}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:var(--space-2);border-radius:var(--radius-md);font-size:var(--text-xs);color:var(--color-text-muted);cursor:pointer;border:none;background:none;transition:color var(--transition-interactive)}
+.mobile-nav-item.active{color:var(--color-primary)}
+@media(max-width:768px){body{padding-bottom:72px}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}
+</style>
+</head>
+<body>
+<a href="#main" class="sr-only">Skip to content</a>
+
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <a href="#" class="logo" onclick="navigate('dashboard');return false;">
+      <svg class="logo-mark" viewBox="0 0 32 32" fill="none" aria-label="NIFES Study Hub logo">
+        <rect width="32" height="32" rx="8" fill="var(--color-primary)"/>
+        <path d="M8 22V10l6 8V10M18 10v12h6c0-3-1-4-3-4s-3-1-3-4c0-2 1-4 3-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-text">NIFES <span>Study Hub</span></span>
+    </a>
+    <div class="search-wrap" id="searchWrap" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" type="search" placeholder="Search questions…" id="searchInput" oninput="handleSearch(this.value)">
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" onclick="toggleSearch()" title="Search" aria-label="Toggle search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+      <button class="btn-icon" data-theme-toggle aria-label="Toggle theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" aria-label="Main navigation">
+    <div class="nav-section">
+      <div class="nav-section-title">Overview</div>
+      <button class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">By Level</div>
+      <button class="nav-item" onclick="navigatePQ('100')" id="nav-100">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        100 Level
+        <span class="nav-badge" id="badge-100">0</span>
+      </button>
+      <button class="nav-item" onclick="navigatePQ('200')" id="nav-200">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        200 Level
+        <span class="nav-badge" id="badge-200">0</span>
+      </button>
+      <button class="nav-item" onclick="navigatePQ('300')" id="nav-300">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        300 Level
+        <span class="nav-badge" id="badge-300">0</span>
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Contribute</div>
+      <button class="nav-item" onclick="navigate('add')" id="nav-add">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+        Add Question
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main" id="main">
+
+    <!-- Dashboard View -->
+    <div class="view active" id="view-dashboard">
+      <h1 class="page-title">Welcome back 👋</h1>
+      <p class="page-subtitle">Your academic support hub for NIFES tutorials — browse past questions by level or course.</p>
+
+      <div class="kpi-grid">
+        <div class="kpi teal">
+          <div class="kpi-label">Total Questions</div>
+          <div class="kpi-value" id="kpi-total">0</div>
+          <div class="kpi-sub">Across all levels</div>
+        </div>
+        <div class="kpi green">
+          <div class="kpi-label">100 Level</div>
+          <div class="kpi-value" id="kpi-100">0</div>
+          <div class="kpi-sub">Questions</div>
+        </div>
+        <div class="kpi gold">
+          <div class="kpi-label">200 Level</div>
+          <div class="kpi-value" id="kpi-200">0</div>
+          <div class="kpi-sub">Questions</div>
+        </div>
+        <div class="kpi warn">
+          <div class="kpi-label">300 Level</div>
+          <div class="kpi-value" id="kpi-300">0</div>
+          <div class="kpi-sub">Questions</div>
+        </div>
+      </div>
+
+      <h2 class="section-heading">Browse by Course</h2>
+      <div class="card-grid" id="courseGrid"></div>
+    </div>
+
+    <!-- PQ Level View -->
+    <div class="view" id="view-pq">
+      <button class="back-btn" onclick="navigate('dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        Back to Dashboard
+      </button>
+      <h1 class="page-title" id="pq-title">Past Questions</h1>
+      <p class="page-subtitle" id="pq-subtitle"></p>
+      <div class="filter-bar">
+        <select class="filter-select" id="filterCourse" onchange="renderPQList()">
+          <option value="">All Courses</option>
+        </select>
+        <select class="filter-select" id="filterYear" onchange="renderPQList()">
+          <option value="">All Years</option>
+        </select>
+        <select class="filter-select" id="filterType" onchange="renderPQList()">
+          <option value="">All Types</option>
+          <option value="Theory">Theory</option>
+          <option value="Calculation">Calculation</option>
+          <option value="Essay">Essay</option>
+          <option value="MCQ">MCQ</option>
+        </select>
+      </div>
+      <div class="pq-list" id="pqList"></div>
+    </div>
+
+    <!-- Add Question View -->
+    <div class="view" id="view-add">
+      <h1 class="page-title">Add a Question</h1>
+      <p class="page-subtitle">Contribute past questions to help your fellow students. All submissions are saved locally.</p>
+      <div class="success-toast" id="successToast">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        Question added successfully!
+      </div>
+      <div class="form-card">
+        <form id="addForm" onsubmit="handleAddQuestion(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="fLevel">Level *</label>
+              <select class="form-select" id="fLevel" required>
+                <option value="">Select level</option>
+                <option value="100">100 Level</option>
+                <option value="200">200 Level</option>
+                <option value="300">300 Level</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fCourse">Course *</label>
+              <input class="form-input" id="fCourse" placeholder="e.g. Engineering Mathematics" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fCode">Course Code</label>
+              <input class="form-input" id="fCode" placeholder="e.g. MTH 101">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fYear">Year</label>
+              <input class="form-input" id="fYear" placeholder="e.g. 2023">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fTopic">Topic</label>
+              <input class="form-input" id="fTopic" placeholder="e.g. Differentiation">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fType">Question Type</label>
+              <select class="form-select" id="fType">
+                <option value="Theory">Theory</option>
+                <option value="Calculation">Calculation</option>
+                <option value="Essay">Essay</option>
+                <option value="MCQ">MCQ</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="fQuestion">Question *</label>
+            <textarea class="form-textarea" id="fQuestion" placeholder="Type or paste the question here…" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="fAnswer">Answer / Solution</label>
+            <textarea class="form-textarea" id="fAnswer" placeholder="Provide a worked solution or key answer points…"></textarea>
+            <div class="form-hint">Optional but highly recommended — helps students understand, not just memorize.</div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              Save Question
+            </button>
+            <button type="button" class="btn-ghost" onclick="document.getElementById('addForm').reset()">Clear</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Search Results View -->
+    <div class="view" id="view-search">
+      <button class="back-btn" onclick="navigate('dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        Back
+      </button>
+      <h1 class="page-title" id="searchTitle">Search Results</h1>
+      <div class="pq-list" id="searchList"></div>
+    </div>
+
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <button class="mobile-nav-item active" onclick="navigate('dashboard')" id="mob-dashboard">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Home
+    </button>
+    <button class="mobile-nav-item" onclick="navigatePQ('100')" id="mob-100">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      100L
+    </button>
+    <button class="mobile-nav-item" onclick="navigatePQ('200')" id="mob-200">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      200L
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('add')" id="mob-add">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      Add
+    </button>
+  </nav>
+</div>
+
+<script>
+// ─── DATA STORE ──────────────────────────────────────────────
+let questions = [
+  // 100 Level Seeds
+  {id:1,level:"100",course:"Engineering Mathematics",code:"MTH 101",year:"2023",topic:"Differentiation",type:"Calculation",question:"Differentiate y = 3x³ − 5x² + 7x − 2 with respect to x. Find the value of dy/dx when x = 2.",answer:"dy/dx = 9x² − 10x + 7
+At x = 2: dy/dx = 9(4) − 10(2) + 7 = 36 − 20 + 7 = 23"},
+  {id:2,level:"100",course:"Engineering Mathematics",code:"MTH 101",year:"2023",topic:"Integration",type:"Calculation",question:"Evaluate ∫(4x³ + 6x − 3) dx.",answer:"∫(4x³ + 6x − 3) dx = x⁴ + 3x² − 3x + C"},
+  {id:3,level:"100",course:"Engineering Mathematics",code:"MTH 101",year:"2022",topic:"Matrices",type:"Calculation",question:"Find the determinant of the matrix A = [[2, 3], [1, 4]].",answer:"det(A) = (2)(4) − (3)(1) = 8 − 3 = 5"},
+  {id:4,level:"100",course:"Applied Mechanics",code:"MEE 101",year:"2023",topic:"Newton's Laws",type:"Theory",question:"State Newton's three laws of motion and give one engineering application of each.",answer:"1st Law (Inertia): A body at rest or uniform motion stays so unless acted upon by a net force. App: seatbelts.
+2nd Law (F=ma): Net force = mass × acceleration. App: vehicle braking distance calculation.
+3rd Law (Action-Reaction): For every action there is an equal and opposite reaction. App: rocket propulsion."},
+  {id:5,level:"100",course:"Applied Mechanics",code:"MEE 101",year:"2022",topic:"Statics",type:"Calculation",question:"A beam of length 6 m is simply supported at both ends. A concentrated load of 12 kN acts at the mid-span. Calculate the support reactions.",answer:"By symmetry: RA = RB = 12/2 = 6 kN each."},
+  {id:6,level:"100",course:"Introduction to Computing",code:"CSC 101",year:"2023",topic:"Number Systems",type:"Calculation",question:"Convert the decimal number 245 to binary.",answer:"245 ÷ 2 = 122 R1
+122 ÷ 2 = 61  R0
+61  ÷ 2 = 30  R1
+30  ÷ 2 = 15  R0
+15  ÷ 2 = 7   R1
+7   ÷ 2 = 3   R1
+3   ÷ 2 = 1   R1
+1   ÷ 2 = 0   R1
+Result (read remainders from bottom): 11110101₂"},
+  {id:7,level:"100",course:"Introduction to Computing",code:"CSC 101",year:"2022",topic:"Programming",type:"Theory",question:"Distinguish between a compiler and an interpreter. Which is generally faster at runtime and why?",answer:"Compiler: Translates the entire source code to machine code before execution. Output is a standalone executable.
+Interpreter: Translates and executes source code line by line at runtime.
+Compilers produce faster runtime programs because the translation overhead happens once at compile time, not repeatedly during execution."},
+  {id:8,level:"100",course:"Use of English",code:"GST 101",year:"2023",topic:"Essay Writing",type:"Essay",question:"Write an essay of not more than 500 words on: 'Technology and its Impact on Education in Nigeria'.",answer:"Key points to cover:
+1. Introduction: Define technology in education context
+2. Positive impacts: e-learning platforms, access to global resources, interactive tools
+3. Challenges: Power supply, internet cost, inequality between urban and rural
+4. Conclusion: Balanced view — technology as a tool, not a replacement for teachers
+
+Ensure: clear thesis, logical paragraphing, correct grammar, no plagiarism."},
+  {id:9,level:"100",course:"Technical Drawing",code:"MEE 103",year:"2023",topic:"Orthographic Projection",type:"Theory",question:"Explain the difference between first-angle and third-angle orthographic projection. Which is predominantly used in Nigeria?",answer:"First-angle projection: The object is placed between the viewer and the projection plane. Views are placed opposite to the direction of viewing.
+Third-angle projection: The projection plane is between the viewer and the object. Views are placed on the same side as the direction of viewing.
+Nigeria uses first-angle projection (British Standard), denoted by the ISO symbol of a cone."},
+
+  // 200 Level Seeds
+  {id:10,level:"200",course:"Engineering Mathematics II",code:"MTH 201",year:"2024",topic:"ODE",type:"Calculation",question:"Solve the second-order ODE: y'' + 3y' − 10y = 0 with initial conditions y(0) = 2 and y'(0) = 1.",answer:"Characteristic equation: r² + 3r − 10 = 0
+Factorize: (r + 5)(r − 2) = 0 → r₁ = 2, r₂ = −5
+General solution: y = C₁e^(2t) + C₂e^(−5t)
+
+Apply initial conditions:
+y(0)=2: C₁ + C₂ = 2
+y'(0)=1: 2C₁ − 5C₂ = 1
+
+From 1st: C₁ = 2 − C₂
+Substitute: 2(2−C₂) − 5C₂ = 1 → 4 − 7C₂ = 1 → C₂ = 3/7
+C₁ = 2 − 3/7 = 11/7
+
+Final: y = (11/7)e^(2t) + (3/7)e^(−5t)"},
+  {id:11,level:"200",course:"Engineering Mathematics II",code:"MTH 201",year:"2023",topic:"Laplace Transform",type:"Calculation",question:"Find the Laplace transform of f(t) = t·e^(2t).",answer:"Using the formula L{t·e^(at)} = 1/(s−a)²
+Here a = 2, so L{t·e^(2t)} = 1/(s−2)², valid for s > 2"},
+  {id:12,level:"200",course:"Fluid Mechanics",code:"MEE 201",year:"2024",topic:"Bernoulli's Equation",type:"Calculation",question:"Water flows through a horizontal pipe that narrows from a diameter of 0.4 m to 0.2 m. If the velocity at the wider section is 2 m/s and pressure is 200 kPa, find the pressure at the narrower section. (ρ = 1000 kg/m³)",answer:"Continuity: A₁v₁ = A₂v₂
+A₁ = π(0.2)² = 0.1257 m², A₂ = π(0.1)² = 0.0314 m²
+v₂ = (0.1257/0.0314) × 2 = 8 m/s
+
+Bernoulli: P₁ + ½ρv₁² = P₂ + ½ρv₂²
+P₂ = P₁ + ½ρ(v₁² − v₂²)
+P₂ = 200,000 + ½(1000)(4 − 64)
+P₂ = 200,000 − 30,000 = 170,000 Pa = 170 kPa"},
+  {id:13,level:"200",course:"Fluid Mechanics",code:"MEE 201",year:"2023",topic:"Viscosity",type:"Theory",question:"Define dynamic viscosity and kinematic viscosity. State their SI units and the relationship between them.",answer:"Dynamic viscosity (μ): Resistance of a fluid to shear deformation. Unit: Pa·s or N·s/m²
+Kinematic viscosity (ν): Ratio of dynamic viscosity to density. Unit: m²/s
+Relationship: ν = μ/ρ  (where ρ is fluid density in kg/m³)"},
+  {id:14,level:"200",course:"Applied Electricity",code:"EEE 201",year:"2024",topic:"AC Circuits",type:"Calculation",question:"An RLC series circuit has R = 10Ω, L = 0.1H, C = 100μF. If the supply voltage is 240V (rms) at 50 Hz, find the impedance and current.",answer:"ω = 2πf = 2π(50) = 314.16 rad/s
+XL = ωL = 314.16 × 0.1 = 31.42 Ω
+XC = 1/(ωC) = 1/(314.16 × 100×10⁻⁶) = 31.83 Ω
+Z = √(R² + (XL−XC)²) = √(100 + (−0.41)²) ≈ √100.17 ≈ 10.008 Ω
+I = V/Z = 240/10.008 ≈ 23.98 A"},
+
+  // 300 Level Seeds  
+  {id:15,level:"300",course:"Control Systems",code:"MEE 301",year:"2024",topic:"Transfer Functions",type:"Theory",question:"Define a transfer function of a linear time-invariant system. State two assumptions made when deriving a transfer function.",answer:"Transfer function: The ratio of the Laplace transform of the output to the Laplace transform of the input, assuming all initial conditions are zero.
+
+Assumptions:
+1. The system is linear (superposition applies)
+2. All initial conditions are assumed to be zero
+3. The system is time-invariant (parameters don't change with time)"},
+  {id:16,level:"300",course:"Thermodynamics",code:"MEE 302",year:"2024",topic:"Second Law",type:"Theory",question:"State the Kelvin-Planck and Clausius statements of the Second Law of Thermodynamics and show that they are equivalent.",answer:"Kelvin-Planck: It is impossible to construct a heat engine that operates in a cycle and produces no effect other than the transfer of heat from a single reservoir and the performance of work.
+
+Clausius: It is impossible to construct a device that operates in a cycle and produces no effect other than the transfer of heat from a cooler body to a hotter body.
+
+Equivalence: Violation of one leads to violation of the other. If a Clausius violator (perfect refrigerator) exists, it can be combined with a heat engine to create a Kelvin-Planck violator (100% efficient engine), and vice versa."},
+];
+
+let currentLevel = "";
+
+// ─── NAVIGATION ──────────────────────────────────────────────
+function navigate(view){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById("view-"+view).classList.add("active");
+  document.querySelectorAll(".nav-item,.mobile-nav-item").forEach(n=>n.classList.remove("active"));
+  const navEl = document.getElementById("nav-"+view);
+  const mobEl = document.getElementById("mob-"+view);
+  if(navEl) navEl.classList.add("active");
+  if(mobEl) mobEl.classList.add("active");
+  if(view==="dashboard") renderDashboard();
+  updateBadges();
+}
+
+function navigatePQ(level){
+  currentLevel = level;
+  navigate("pq");
+  document.getElementById("nav-"+level)?.classList.add("active");
+  document.getElementById("mob-"+level)?.classList.add("active");
+  document.getElementById("pq-title").textContent = level+" Level Past Questions";
+  const count = questions.filter(q=>q.level===level).length;
+  document.getElementById("pq-subtitle").textContent = count+" question"+(count!==1?"s":"")+" available";
+  populateFilters(level);
+  renderPQList();
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────
+function renderDashboard(){
+  document.getElementById("kpi-total").textContent = questions.length;
+  ["100","200","300"].forEach(l=>{
+    const n = questions.filter(q=>q.level===l).length;
+    document.getElementById("kpi-"+l).textContent = n;
+  });
+  const courses = {};
+  questions.forEach(q=>{
+    const key = q.course+"|"+q.level;
+    if(!courses[key]) courses[key]={course:q.course,code:q.code,level:q.level,count:0};
+    courses[key].count++;
+  });
+  const grid = document.getElementById("courseGrid");
+  grid.innerHTML = Object.values(courses).map(c=>`
+    <div class="course-card" onclick="filterByCourse('${c.level}','${c.course}')">
+      <div class="course-card-top">
+        <span class="course-chip chip-${c.level}">${c.level}L</span>
+        <span class="course-pq-count">${c.count} PQ</span>
+      </div>
+      <div class="course-title">${c.course}</div>
+      <div class="course-code">${c.code||""}</div>
+      <div class="course-meta">
+        <span class="course-meta-item">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          ${[...new Set(questions.filter(q=>q.level===c.level&&q.course===c.course).map(q=>q.year).filter(Boolean))].join(", ")||"Multiple years"}
+        </span>
+      </div>
+    </div>`).join("");
+}
+
+function filterByCourse(level, course){
+  navigatePQ(level);
+  setTimeout(()=>{
+    const sel = document.getElementById("filterCourse");
+    if(sel) sel.value = course;
+    renderPQList();
+  },50);
+}
+
+// ─── PQ LIST ─────────────────────────────────────────────────
+function populateFilters(level){
+  const lvlQs = questions.filter(q=>q.level===level);
+  const courses = [...new Set(lvlQs.map(q=>q.course))];
+  const years = [...new Set(lvlQs.map(q=>q.year).filter(Boolean))].sort((a,b)=>b-a);
+  const cSel = document.getElementById("filterCourse");
+  cSel.innerHTML = '<option value="">All Courses</option>'+courses.map(c=>`<option value="${c}">${c}</option>`).join("");
+  const ySel = document.getElementById("filterYear");
+  ySel.innerHTML = '<option value="">All Years</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join("");
+  document.getElementById("filterType").value = "";
+}
+
+function renderPQList(){
+  const level = currentLevel;
+  const course = document.getElementById("filterCourse")?.value||"";
+  const year = document.getElementById("filterYear")?.value||"";
+  const type = document.getElementById("filterType")?.value||"";
+  let filtered = questions.filter(q=>{
+    if(q.level!==level) return false;
+    if(course && q.course!==course) return false;
+    if(year && q.year!==year) return false;
+    if(type && q.type!==type) return false;
+    return true;
+  });
+  const list = document.getElementById("pqList");
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><h3>No questions found</h3><p>Try adjusting your filters or add a new question.</p><button class="btn-primary" onclick="navigate('add')">Add Question</button></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(q=>renderPQItem(q)).join("");
+}
+
+function renderPQItem(q){
+  return `<div class="pq-item" id="pq-${q.id}">
+    <div class="pq-item-header">
+      <div class="pq-meta">
+        ${q.year?`<span class="tag tag-year">${q.year}</span>`:""}
+        ${q.topic?`<span class="tag tag-topic">${q.topic}</span>`:""}
+        ${q.type?`<span class="tag tag-type">${q.type}</span>`:""}
+      </div>
+      <span style="font-size:var(--text-xs);color:var(--color-text-faint);white-space:nowrap">${q.course}</span>
+    </div>
+    <p class="pq-question">${q.question}</p>
+    ${q.answer?`<button class="pq-answer-toggle" onclick="toggleAnswer(${q.id})">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      Show Answer
+    </button>
+    <div class="pq-answer" id="ans-${q.id}">${q.answer.replace(/
+/g,"<br>")}</div>`:""}
+  </div>`;
+}
+
+function toggleAnswer(id){
+  const ansEl = document.getElementById("ans-"+id);
+  const btn = ansEl?.previousElementSibling;
+  if(!ansEl) return;
+  const isShown = ansEl.classList.toggle("show");
+  if(btn) btn.innerHTML = isShown
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg> Hide Answer`
+    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg> Show Answer`;
+}
+
+// ─── ADD QUESTION ─────────────────────────────────────────────
+function handleAddQuestion(e){
+  e.preventDefault();
+  const q = {
+    id: Date.now(),
+    level: document.getElementById("fLevel").value,
+    course: document.getElementById("fCourse").value.trim(),
+    code: document.getElementById("fCode").value.trim(),
+    year: document.getElementById("fYear").value.trim(),
+    topic: document.getElementById("fTopic").value.trim(),
+    type: document.getElementById("fType").value,
+    question: document.getElementById("fQuestion").value.trim(),
+    answer: document.getElementById("fAnswer").value.trim(),
+  };
+  questions.push(q);
+  e.target.reset();
+  const toast = document.getElementById("successToast");
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"),3000);
+  updateBadges();
+}
+
+// ─── SEARCH ───────────────────────────────────────────────────
+let searchVisible = false;
+function toggleSearch(){
+  searchVisible = !searchVisible;
+  const wrap = document.getElementById("searchWrap");
+  wrap.style.display = searchVisible ? "block":"none";
+  if(searchVisible) document.getElementById("searchInput").focus();
+}
+
+function handleSearch(val){
+  if(!val.trim()){ navigate("dashboard"); return; }
+  const q = val.toLowerCase();
+  const results = questions.filter(qu=>
+    qu.question.toLowerCase().includes(q)||
+    qu.course.toLowerCase().includes(q)||
+    (qu.topic||"").toLowerCase().includes(q)||
+    (qu.answer||"").toLowerCase().includes(q)
+  );
+  navigate("search");
+  document.getElementById("searchTitle").textContent = `"${val}" — ${results.length} result${results.length!==1?"s":""}`;
+  document.getElementById("searchList").innerHTML = results.length
+    ? results.map(r=>renderPQItem(r)).join("")
+    : `<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><h3>No results found</h3><p>Try different keywords.</p></div>`;
+}
+
+// ─── BADGES ───────────────────────────────────────────────────
+function updateBadges(){
+  ["100","200","300"].forEach(l=>{
+    const n = questions.filter(q=>q.level===l).length;
+    const el = document.getElementById("badge-"+l);
+    if(el) el.textContent = n;
+  });
+}
+
+// ─── THEME TOGGLE ─────────────────────────────────────────────
+(function(){
+  const t=document.querySelector('[data-theme-toggle]');
+  const r=document.documentElement;
+  let d=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  r.setAttribute('data-theme',d);
+  updateThemeIcon(d);
+  t&&t.addEventListener('click',()=>{
+    d=d==='dark'?'light':'dark';
+    r.setAttribute('data-theme',d);
+    updateThemeIcon(d);
+  });
+  function updateThemeIcon(theme){
+    if(!t) return;
+    t.innerHTML = theme==='dark'
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    t.setAttribute('aria-label','Switch to '+(d==='dark'?'light':'dark')+' mode');
+  }
+})();
+
+// ─── INIT ─────────────────────────────────────────────────────
+renderDashboard();
+updateBadges();
+</script>
+</body>
+</html>
