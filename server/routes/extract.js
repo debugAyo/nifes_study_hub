@@ -5,11 +5,14 @@ const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 const { extractText } = require('../services/pdfParser');
 const { extractQuestions } = require('../services/questionExtractor');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Multer setup — store in /uploads temporarily
+// ─── Multer setup ──────────────────────────────────
 const uploadDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) { cb(null, uploadDir); },
   filename: function (req, file, cb) {
@@ -17,17 +20,21 @@ const storage = multer.diskStorage({
     cb(null, unique + '-' + file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_'));
   }
 });
-const upload = multer({
+
+var allowedMimes = ['application/pdf'];
+var upload = multer({
   storage: storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: function (req, file, cb) {
-    if (file.mimetype === 'application/pdf') cb(null, true);
-    else cb(new Error('Only PDF files allowed'));
+    if (allowedMimes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only PDF files are allowed'));
   }
 });
 
+// All routes below require authentication
+router.use(requireAuth);
+
 // ─── POST /api/extract ─────────────────────────────
-// Upload a PDF, extract text, detect questions, return them as JSON.
 router.post('/extract', upload.single('pdf'), async function(req, res) {
   try {
     if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded' });
@@ -37,7 +44,7 @@ router.post('/extract', upload.single('pdf'), async function(req, res) {
     var questions = extractQuestions(rawText);
 
     // Clean up temp file
-    fs.unlink(filePath, function() {});
+    if (fs.existsSync(filePath)) fs.unlink(filePath, function() {});
 
     res.json({
       success: true,
@@ -49,28 +56,41 @@ router.post('/extract', upload.single('pdf'), async function(req, res) {
     });
   } catch (err) {
     console.error('[extract] error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Failed to extract questions from PDF. Please try again.' });
   }
 });
 
 // ─── POST /api/upload-extracted ────────────────────
-// Save extracted questions to Supabase (batch insert).
 router.post('/upload-extracted', async function(req, res) {
   try {
     var { questions, level, course, code, year, topic } = req.body;
-    if (!questions || !questions.length) return res.status(400).json({ error: 'No questions provided' });
+
+    // Input validation
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ error: 'No questions provided' });
+    }
+    if (questions.length > 100) {
+      return res.status(400).json({ error: 'Maximum 100 questions per batch' });
+    }
+    if (level && !['100', '200', '300'].includes(level)) {
+      return res.status(400).json({ error: 'Invalid level' });
+    }
 
     var supabaseUrl = process.env.SUPABASE_URL;
-    var supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseKey) return res.status(500).json({ error: 'Supabase not configured on server' });
+    var supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({ error: 'Supabase service key not configured on server' });
+    }
 
-    var supabase = createClient(supabaseUrl, supabaseKey);
+    var supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
 
     var records = questions.map(function(q) {
+      if (!q.question || typeof q.question !== 'string') return null;
       var answer = q.answer || '';
-      if (q.type === 'MCQ' && q.options) {
-        // Store MCQ options as JSON in the answer field (same format as frontend)
-        if (!answer) answer = JSON.stringify({ options: q.options, correct: '' });
+      if (q.type === 'MCQ' && q.options && !answer) {
+        answer = JSON.stringify({ options: q.options, correct: '' });
       }
       return {
         level: level || '100',
@@ -82,7 +102,11 @@ router.post('/upload-extracted', async function(req, res) {
         question: q.question,
         answer: answer,
       };
-    });
+    }).filter(Boolean);
+
+    if (records.length === 0) {
+      return res.status(400).json({ error: 'No valid questions to upload' });
+    }
 
     var result = await supabase.from('questions').insert(records).select();
     if (result.error) throw result.error;
@@ -90,7 +114,7 @@ router.post('/upload-extracted', async function(req, res) {
     res.json({ success: true, count: result.data.length, data: result.data });
   } catch (err) {
     console.error('[upload-extracted] error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Failed to upload questions. Please try again.' });
   }
 });
 

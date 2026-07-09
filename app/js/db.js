@@ -160,3 +160,184 @@ async function dbGetCurrentUser() {
     return result.data?.user || null;
   } catch { return null; }
 }
+
+/* ─── Auth Token ──────────────────────────────────── */
+async function dbGetAuthToken() {
+  try {
+    if (!supabaseClient) return null;
+    var { data } = await supabaseClient.auth.getSession();
+    return data?.session?.access_token || null;
+  } catch { return null; }
+}
+
+/* ─── Password Reset ──────────────────────────────── */
+async function dbResetPassword(email) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var result = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/app/index.html',
+    });
+    if (result.error) throw result.error;
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ─── Profiles / Roles ────────────────────────────── */
+async function dbGetProfile(userId) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured', data: null };
+    var result = await supabaseClient.from('profiles').select('*').eq('id', userId).maybeSingle();
+    if (result.error) throw result.error;
+    if (!result.data) {
+      // Auto-create profile if missing (e.g. user signed up before migration)
+      var user = await supabaseClient.auth.getUser();
+      var fullName = user?.data?.user?.user_metadata?.full_name || '';
+      var insertRes = await supabaseClient.from('profiles').insert({
+        id: userId, full_name: fullName, role: 'user'
+      }).select().maybeSingle();
+      if (insertRes.error) throw insertRes.error;
+      return { success: true, data: insertRes.data };
+    }
+    return { success: true, data: result.data };
+  } catch (err) {
+    return { success: false, error: err.message, data: null };
+  }
+}
+
+async function dbFetchAllUsers() {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured', data: [] };
+    var result = await supabaseClient.from('profiles').select('id, full_name, role, created_at');
+    if (result.error) throw result.error;
+    var profiles = result.data || [];
+    var users = [];
+    for (var i = 0; i < profiles.length; i++) {
+      var p = profiles[i];
+      var qRes = await supabaseClient.from('questions').select('id', { count: 'exact', head: true }).eq('user_id', p.id);
+      var qCount = qRes.count || 0;
+      users.push({ id: p.id, full_name: p.full_name, role: p.role, created_at: p.created_at, question_count: qCount });
+    }
+    return { success: true, data: users };
+  } catch (err) {
+    return { success: false, error: err.message, data: [] };
+  }
+}
+
+async function dbUpdateUserRole(userId, role) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var result = await supabaseClient.from('profiles').update({ role: role }).eq('id', userId);
+    if (result.error) throw result.error;
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ─── Bookmarks ───────────────────────────────────── */
+async function dbToggleBookmark(questionId) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var user = await supabaseClient.auth.getUser();
+    var userId = user?.data?.user?.id;
+    if (!userId) return { success: false, error: 'Not authenticated' };
+
+    var existing = await supabaseClient.from('bookmarks').select('id').eq('user_id', userId).eq('question_id', questionId).maybeSingle();
+    if (existing.data) {
+      await supabaseClient.from('bookmarks').delete().eq('id', existing.data.id);
+      return { success: true, bookmarked: false };
+    } else {
+      await supabaseClient.from('bookmarks').insert({ user_id: userId, question_id: questionId });
+      return { success: true, bookmarked: true };
+    }
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+async function dbFetchBookmarks() {
+  try {
+    if (!supabaseClient) return { success: false, data: [] };
+    var user = await supabaseClient.auth.getUser();
+    var userId = user?.data?.user?.id;
+    if (!userId) return { success: true, data: [] };
+    var result = await supabaseClient.from('bookmarks').select('question_id').eq('user_id', userId);
+    if (result.error) throw result.error;
+    return { success: true, data: result.data || [] };
+  } catch (err) {
+    return { success: false, error: err.message, data: [] };
+  }
+}
+
+/* ─── Quiz History ────────────────────────────────── */
+async function dbFetchQuizSessions(limit) {
+  limit = limit || 10;
+  try {
+    if (!supabaseClient) return { success: false, data: [] };
+    var user = await supabaseClient.auth.getUser();
+    var userId = user?.data?.user?.id;
+    if (!userId) return { success: true, data: [] };
+    var result = await supabaseClient.from('quiz_sessions')
+      .select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(limit);
+    if (result.error) throw result.error;
+    return { success: true, data: result.data || [] };
+  } catch (err) {
+    return { success: false, error: err.message, data: [] };
+  }
+}
+
+/* ─── Edit / Delete Questions ─────────────────────── */
+async function dbUpdateQuestion(id, data) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var user = await supabaseClient.auth.getUser();
+    var payload = Object.assign({}, data, { updated_at: new Date().toISOString(), edited_by: user?.data?.user?.id || null });
+    var result = await supabaseClient.from('questions').update(payload).eq('id', id).select().single();
+    if (result.error) throw result.error;
+    return { success: true, data: result.data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+async function dbDeleteQuestion(id) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var result = await supabaseClient.from('questions').delete().eq('id', id);
+    if (result.error) throw result.error;
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+async function dbDeleteMaterial(id) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var result = await supabaseClient.from('materials').delete().eq('id', id);
+    if (result.error) throw result.error;
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ─── Paginated Questions ─────────────────────────── */
+async function dbFetchQuestionsPaginated(level, page, perPage) {
+  page = page || 1;
+  perPage = perPage || 20;
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured', data: [], count: 0 };
+    var from = (page - 1) * perPage;
+    var to = from + perPage - 1;
+    var query = supabaseClient.from('questions').select('*', { count: 'exact' });
+    if (level) query = query.eq('level', level);
+    var result = await query.order('created_at', { ascending: false }).range(from, to);
+    if (result.error) throw result.error;
+    return { success: true, data: result.data, count: result.count };
+  } catch (err) {
+    return { success: false, error: err.message, data: [], count: 0 };
+  }
+}

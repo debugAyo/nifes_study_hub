@@ -2,6 +2,44 @@
    NIFES Study Hub — Main Application (UI Layer)
    ══════════════════════════════════════════════════ */
 
+/* ─── Password Toggle ─────────────────────────────── */
+function togglePasswordVisibility(inputId, btn) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  var svg = btn.querySelector('svg');
+  if (svg) {
+    svg.innerHTML = isPassword
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+/* ─── Sanitize ────────────────────────────────────── */
+function sanitize(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+/* ─── Loading Helpers ────────────────────────────── */
+function showPageLoading() {
+  var el = document.getElementById('loadingOverlay');
+  if (el) el.classList.remove('hidden');
+}
+
+function hidePageLoading() {
+  var el = document.getElementById('loadingOverlay');
+  if (el) el.classList.add('hidden');
+}
+
+function showContainerLoading(containerId) {
+  var el = document.getElementById(containerId);
+  if (el) el.innerHTML = '<div class="loading"><div class="spinner"></div><span>Loading…</span></div>';
+}
+
 /* ─── State ──────────────────────────────────────── */
 var questions = [];
 var materials = [];
@@ -9,10 +47,16 @@ var currentLevel = '';
 var searchVisible = false;
 var studyModeActive = false;
 var currentUser = null;
+var currentUserRole = 'user';
+var bookmarkedIds = {};
+var bookmarkFilterActive = false;
+var pqPage = 1;
+var perPage = 20;
 
 var quizQuestions = [];
 var quizIndex = 0;
 var quizScore = 0;
+var quizSelectedOption = '';
 var quizMissed = [];
 var quizTotal = 0;
 var quizActive = false;
@@ -28,10 +72,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   currentUser = await dbGetCurrentUser();
   updateAuthUI();
-  await loadAllData();
-  renderDashboard();
-  updateBadges();
   initTheme();
+
+  if (currentUser) {
+    hideAuthPage();
+  } else {
+    showAuthPage();
+  }
 });
 
 /* ─── Data Loading ────────────────────────────────── */
@@ -73,11 +120,14 @@ function navigate(view) {
   if (view === 'calculator') initCalculatorView();
   if (view === 'cgpa') initCGPAView();
   if (view === 'materials') renderMaterialsView();
+  if (view === 'profile') renderProfileView();
+  if (view === 'admin') renderAdminView();
   updateBadges();
 }
 
 function navigatePQ(level) {
   currentLevel = level;
+  pqPage = 1;
   navigate('pq');
   var navEl = document.getElementById('nav-' + level);
   var mobEl = document.getElementById('mob-' + level);
@@ -91,6 +141,18 @@ function navigatePQ(level) {
   renderLevelMaterials(level);
 }
 
+/* ─── Form Validation ──────────────────────────────── */
+function validateField(el) {
+  if (!el) return;
+  el.classList.remove('success', 'error');
+  if (el.checkValidity()) el.classList.add('success');
+  else el.classList.add('error');
+}
+function resetFieldValidation(el) {
+  if (!el) return;
+  el.classList.remove('error', 'success');
+}
+
 /* ─── Auth UI ─────────────────────────────────────── */
 function updateAuthUI() {
   var container = document.getElementById('authContainer');
@@ -98,13 +160,18 @@ function updateAuthUI() {
   if (currentUser) {
     var name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
     var initial = name.charAt(0).toUpperCase();
+    var safeName = sanitize(name);
+    var adminLink = currentUserRole === 'admin' || currentUserRole === 'superuser'
+      ? '<button onclick="navigate(\'admin\');toggleUserMenu()">Admin Panel</button>' : '';
     container.innerHTML = '<div class="user-badge" onclick="toggleUserMenu()">' +
-      '<div class="user-avatar">' + initial + '</div>' +
-      '<span class="user-name">' + name + '</span></div>' +
+      '<div class="user-avatar">' + sanitize(initial) + '</div>' +
+      '<span class="user-name">' + safeName + '</span></div>' +
       '<div class="user-dropdown" id="userDropdown">' +
+      '<button onclick="navigate(\'profile\');toggleUserMenu()">My Profile</button>' +
+      adminLink +
       '<button onclick="handleSignOut()">Sign Out</button></div>';
   } else {
-    container.innerHTML = '<button class="auth-btn" onclick="openAuthModal()">Sign In</button>';
+    container.innerHTML = '<button class="auth-btn" onclick="closeAuthModal()">Sign In</button>';
   }
 }
 
@@ -116,22 +183,69 @@ function toggleUserMenu() {
 async function handleSignOut() {
   await dbSignOut();
   currentUser = null;
+  currentUserRole = 'user';
+  bookmarkedIds = {};
   updateAuthUI();
   var el = document.getElementById('userDropdown');
   if (el) el.classList.remove('show');
+  window.location.href = '../index.html';
 }
 
-function openAuthModal() {
-  document.getElementById('authModal').classList.add('show');
+function showAuthPage() {
+  document.getElementById('authPage').classList.remove('hidden');
+  document.getElementById('appContainer').style.display = 'none';
   switchAuthTab('signin');
 }
 
+async function hideAuthPage() {
+  showPageLoading();
+  document.getElementById('authPage').classList.add('hidden');
+  document.getElementById('appContainer').style.display = '';
+  updateAuthUI();
+  if (currentUser) {
+    var pRes = await dbGetProfile(currentUser.id);
+    currentUserRole = pRes.data?.role || 'user';
+    var bRes = await dbFetchBookmarks();
+    if (bRes.success) {
+      bookmarkedIds = {};
+      bRes.data.forEach(function(b) { bookmarkedIds[b.question_id] = true; });
+    }
+    var adminNav = document.getElementById('navAdminSection');
+    if (adminNav) adminNav.style.display = currentUserRole === 'admin' || currentUserRole === 'superuser' ? '' : 'none';
+  }
+  await loadAllData();
+  renderDashboard();
+  updateBadges();
+  hidePageLoading();
+}
+
 function closeAuthModal() {
-  document.getElementById('authModal').classList.remove('show');
-  var errEl = document.getElementById('authError');
-  var sucEl = document.getElementById('authSuccess');
-  if (errEl) errEl.classList.remove('show');
-  if (sucEl) sucEl.classList.remove('show');
+  window.location.href = '../index.html';
+}
+
+function renderProfileView() {
+  if (!currentUser) return;
+  var name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
+  var initial = name.charAt(0).toUpperCase();
+  document.getElementById('profileAvatar').innerHTML = '<div class="profile-avatar-circle">' + sanitize(initial) + '</div>';
+  document.getElementById('profileName').textContent = sanitize(name);
+  document.getElementById('profileEmail').textContent = currentUser.email || '';
+  document.getElementById('profileRole').textContent = 'Role: ' + currentUserRole;
+
+  var myQs = questions.filter(function(q) { return q.user_id === currentUser.id; });
+  document.getElementById('profileStats').innerHTML =
+    '<div class="profile-stat"><strong>' + myQs.length + '</strong> questions contributed</div>';
+
+  var list = document.getElementById('myQuestionsList');
+  if (myQs.length) {
+    list.innerHTML = myQs.map(function(q) {
+      return '<div class="pq-item"><div class="pq-item-header"><div class="pq-meta"><span class="tag tag-type">' + sanitize(q.type) + '</span></div>' +
+        '<span style="font-size:var(--text-xs);color:var(--color-text-faint)">' + sanitize(q.course) + '</span></div>' +
+        '<p class="pq-question">' + sanitize(q.question) + '</p></div>';
+    }).join('');
+  } else {
+    list.innerHTML = '<div class="empty-state"><h3>No questions yet</h3><p>Contribute a question from the Add Question page.</p></div>';
+  }
 }
 
 function switchAuthTab(tab) {
@@ -156,6 +270,37 @@ function hideAuthMessages() {
   var sucEl = document.getElementById('authSuccess');
   if (errEl) { errEl.classList.remove('show'); errEl.textContent = ''; }
   if (sucEl) { sucEl.classList.remove('show'); sucEl.textContent = ''; }
+  var fErr = document.getElementById('forgotError');
+  var fSuc = document.getElementById('forgotSuccess');
+  if (fErr) { fErr.classList.remove('show'); fErr.textContent = ''; }
+  if (fSuc) { fSuc.classList.remove('show'); fSuc.textContent = ''; }
+}
+
+function showForgotPassword() {
+  hideAuthMessages();
+  document.getElementById('signInForm').classList.remove('active');
+  document.getElementById('forgotForm').style.display = 'block';
+}
+function closeForgotPassword() {
+  hideAuthMessages();
+  document.getElementById('forgotForm').style.display = 'none';
+  document.getElementById('signInForm').classList.add('active');
+}
+
+async function handleForgotPassword() {
+  var email = document.getElementById('forgotEmail').value;
+  var errEl = document.getElementById('forgotError');
+  var sucEl = document.getElementById('forgotSuccess');
+  hideAuthMessages();
+  if (!email) { errEl.textContent = 'Please enter your email.'; errEl.classList.add('show'); return; }
+  var res = await dbResetPassword(email);
+  if (res.success) {
+    sucEl.textContent = 'Reset link sent! Check your email (and spam).';
+    sucEl.classList.add('show');
+  } else {
+    errEl.textContent = res.error || 'Failed to send reset link.';
+    errEl.classList.add('show');
+  }
 }
 
 async function handleSignIn(e) {
@@ -165,12 +310,21 @@ async function handleSignIn(e) {
   var errorEl = document.getElementById('authError');
   var res = await dbSignIn(email, password);
   if (res.success) {
+    if (!res.data.user?.email_confirmed_at) {
+      errorEl.textContent = 'Email not yet confirmed. Check your inbox (and spam) for the confirmation link.';
+      errorEl.classList.add('show');
+      return;
+    }
     currentUser = res.data.user;
     updateAuthUI();
-    closeAuthModal();
+    hideAuthPage();
     document.getElementById('signInForm').reset();
   } else {
-    errorEl.textContent = res.error || 'Sign in failed.';
+    var msg = res.error || 'Sign in failed.';
+    if (msg.toLowerCase().includes('email not confirmed')) {
+      msg = 'Email not confirmed. Check your inbox (and spam) for the confirmation link.';
+    }
+    errorEl.textContent = msg;
     errorEl.classList.add('show');
   }
 }
@@ -186,13 +340,17 @@ async function handleSignUp(e) {
 
   hideAuthMessages();
   if (password !== confirm) { errorEl.textContent = 'Passwords do not match.'; errorEl.classList.add('show'); return; }
-  if (password.length < 6) { errorEl.textContent = 'Password must be at least 6 characters.'; errorEl.classList.add('show'); return; }
+  if (password.length < 8) { errorEl.textContent = 'Password must be at least 8 characters.'; errorEl.classList.add('show'); return; }
 
   var res = await dbSignUp(email, password, name);
   if (res.success) {
-    successEl.textContent = 'Account created! Check your email to confirm.';
-    successEl.classList.add('show');
     document.getElementById('signUpForm').reset();
+    switchAuthTab('signin');
+    var msg = res.data?.user?.identities?.length === 0
+      ? 'This email is already registered. Try signing in.'
+      : 'Account created! Check your email to confirm (check spam too). After confirming, sign in below.';
+    successEl.textContent = msg;
+    successEl.classList.add('show');
   } else {
     errorEl.textContent = res.error || 'Sign up failed.';
     errorEl.classList.add('show');
@@ -203,8 +361,85 @@ async function handleGoogleSignIn() {
   await dbSignInWithGoogle();
 }
 
+/* ─── Admin View ──────────────────────────────────── */
+function renderAdminView() {
+  renderAdminUsers();
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('#view-admin .tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('#view-admin .tab-content').forEach(function(c) { c.classList.remove('active'); });
+  var tabBtn = document.querySelector('#view-admin .tab[data-tab="admin-' + tab + '"]');
+  if (tabBtn) tabBtn.classList.add('active');
+  document.getElementById('tab-admin-' + tab).classList.add('active');
+  if (tab === 'users') renderAdminUsers();
+  if (tab === 'questions') renderAdminQuestions();
+  if (tab === 'materials') renderAdminMaterials();
+}
+
+function renderAdminUsers() {
+  var list = document.getElementById('adminUsersList');
+  if (!list) return;
+  showContainerLoading('adminUsersList');
+  dbFetchAllUsers().then(function(res) {
+    if (!res.success || !res.data.length) {
+      list.innerHTML = '<div class="empty-state"><h3>No users found</h3></div>';
+      return;
+    }
+    list.innerHTML = '<table class="admin-table"><thead><tr><th>Name</th><th>Role</th><th>Joined</th><th>Questions</th><th>Action</th></tr></thead><tbody>' +
+      res.data.map(function(u) {
+        var date = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
+        var canChange = currentUserRole === 'superuser' && u.id !== currentUser.id;
+        var roleOpts = ['user', 'admin', 'superuser'].map(function(r) {
+          return '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + r + '</option>';
+        }).join('');
+        return '<tr><td>' + sanitize(u.full_name || 'Unknown') + '</td>' +
+          '<td>' + sanitize(u.role) + '</td>' +
+          '<td>' + date + '</td>' +
+          '<td>' + u.question_count + '</td>' +
+          '<td>' + (canChange ? '<select onchange="dbUpdateUserRole(\'' + u.id + '\',this.value).then(function(r){if(r.success)showToast(\'success\',\'Role updated\');})">' + roleOpts + '</select>' : '-') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  });
+}
+
+function renderAdminQuestions() {
+  var list = document.getElementById('adminQuestionsList');
+  if (!list) return;
+  if (!questions.length) {
+    list.innerHTML = '<div class="empty-state"><h3>No questions</h3></div>';
+    return;
+  }
+  list.innerHTML = '<div class="admin-items">' + questions.map(function(q) {
+    return '<div class="admin-item"><div class="admin-item-info"><strong>' + sanitize(q.course) + '</strong> — ' + sanitize(q.question.substring(0, 100)) + (q.question.length > 100 ? '…' : '') + '</div>' +
+      '<div class="admin-item-actions"><span class="tag tag-type">' + sanitize(q.level) + 'L</span>' +
+      '<button class="btn-icon btn-icon-sm" onclick="showEditQuestion(' + q.id + ')" title="Edit">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+      '<button class="btn-icon btn-icon-sm" onclick="confirmDeleteQuestion(' + q.id + ')" title="Delete">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>';
+  }).join('') + '</div>';
+}
+
+function renderAdminMaterials() {
+  var list = document.getElementById('adminMaterialsList');
+  if (!list) return;
+  if (!materials.length) {
+    list.innerHTML = '<div class="empty-state"><h3>No materials</h3></div>';
+    return;
+  }
+  list.innerHTML = '<div class="admin-items">' + materials.map(function(m) {
+    return '<div class="admin-item"><div class="admin-item-info"><strong>' + sanitize(m.title) + '</strong> — ' + sanitize(m.course) + ' · ' + sanitize(m.type) + '</div>' +
+      '<div class="admin-item-actions">' +
+      '<button class="btn-icon btn-icon-sm" onclick="if(confirm(\'Delete this material?\')){dbDeleteMaterial(' + m.id + ').then(function(r){if(r.success){showToast(\'success\',\'Material deleted\');refreshMaterials().then(function(){renderAdminMaterials();});}})}" title="Delete">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>';
+  }).join('') + '</div>';
+}
+
 /* ─── Dashboard ───────────────────────────────────── */
 function renderDashboard() {
+  var h = new Date().getHours();
+  var g = document.getElementById('dashGreeting');
+  if (g) g.textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+
   document.getElementById('kpi-total').textContent = questions.length;
   ['100', '200', '300'].forEach(function(l) {
     var n = questions.filter(function(q) { return q.level === l; }).length;
@@ -221,13 +456,35 @@ function renderDashboard() {
   var grid = document.getElementById('courseGrid');
   grid.innerHTML = Object.values(courses).map(function(c) {
     var years = [...new Set(questions.filter(function(q) { return q.level === c.level && q.course === c.course; }).map(function(q) { return q.year; }).filter(Boolean))].join(', ') || 'Multiple years';
-    return '<div class="course-card" onclick="filterByCourse(\'' + c.level + '\',\'' + c.course.replace(/'/g, "\\'") + '\')">' +
+    return '<div class="course-card" onclick="filterByCourse(\'' + c.level + '\',\'' + sanitize(c.course).replace(/'/g, "\\'") + '\')">' +
       '<div class="course-card-top"><span class="course-chip chip-' + c.level + '">' + c.level + 'L</span><span class="course-pq-count">' + c.count + ' PQ</span></div>' +
-      '<div class="course-title">' + c.course + '</div>' +
-      '<div class="course-code">' + (c.code || '') + '</div>' +
-      '<div class="course-meta"><span class="course-meta-item">' + years + '</span></div></div>';
+      '<div class="course-title">' + sanitize(c.course) + '</div>' +
+      '<div class="course-code">' + sanitize(c.code || '') + '</div>' +
+      '<div class="course-meta"><span class="course-meta-item">' + sanitize(years) + '</span></div></div>';
   }).join('');
   renderDashboardMaterials();
+  renderQuizHistory();
+}
+
+function renderQuizHistory() {
+  var section = document.getElementById('quizHistorySection');
+  var list = document.getElementById('quizHistoryList');
+  if (!section || !list) return;
+  dbFetchQuizSessions(5).then(function(res) {
+    if (!res.success || !res.data || !res.data.length) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    list.innerHTML = res.data.map(function(s) {
+      var pct = Math.round((s.score / s.total) * 100);
+      var date = new Date(s.created_at).toLocaleDateString();
+      var cls = pct >= 70 ? 'good' : pct >= 50 ? 'ok' : 'bad';
+      var missedCount = s.missed_data ? s.missed_data.length : s.total - s.score;
+      return '<div class="quiz-history-item">' +
+        '<div class="quiz-history-info"><div class="quiz-history-course">' + sanitize(s.course) + ' (' + sanitize(s.level) + 'L)' + '</div>' +
+        '<div class="quiz-history-date">' + date + '</div></div>' +
+        '<div class="quiz-history-score"><div class="quiz-history-pct ' + cls + '">' + pct + '%</div>' +
+        '<div class="quiz-history-detail">' + s.score + '/' + s.total + ' · ' + missedCount + ' missed</div></div></div>';
+    }).join('');
+  });
 }
 
 function renderDashboardMaterials() {
@@ -235,8 +492,10 @@ function renderDashboardMaterials() {
   if (!container) return;
   if (!materials.length) { container.innerHTML = ''; return; }
   var recent = materials.slice(0, 6);
-  container.innerHTML = '<h2 class="section-heading" style="margin-top:var(--space-8)">Recent Course Materials</h2>' +
-    '<div class="material-grid">' + recent.map(renderMaterialCard).join('') + '</div>';
+  container.innerHTML = '<div style="margin-top:var(--space-10)">' +
+    '<h2 class="section-heading">Recent Course Materials</h2>' +
+    '<p class="section-desc">Lecture notes, PDFs, and study guides shared by students.</p>' +
+    '<div class="material-grid" style="margin-top:var(--space-5)">' + recent.map(renderMaterialCard).join('') + '</div></div>';
 }
 
 function filterByCourse(level, course) {
@@ -254,15 +513,20 @@ function populateFilters(level) {
   var years = [...new Set(lvlQs.map(function(q) { return q.year; }).filter(Boolean))].sort(function(a, b) { return b - a; });
 
   var cSel = document.getElementById('filterCourse');
-  cSel.innerHTML = '<option value="">All Courses</option>' + courses.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  cSel.innerHTML = '<option value="">All Courses</option>' + courses.map(function(c) { return '<option value="' + sanitize(c) + '">' + sanitize(c) + '</option>'; }).join('');
 
   var ySel = document.getElementById('filterYear');
-  ySel.innerHTML = '<option value="">All Years</option>' + years.map(function(y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+  ySel.innerHTML = '<option value="">All Years</option>' + years.map(function(y) { return '<option value="' + sanitize(y) + '">' + sanitize(y) + '</option>'; }).join('');
 
   document.getElementById('filterType').value = '';
 }
 
 function renderPQList() {
+  pqPage = 1;
+  renderPQListPage();
+}
+
+function renderPQListPage() {
   var level = currentLevel;
   var course = document.getElementById('filterCourse')?.value || '';
   var year = document.getElementById('filterYear')?.value || '';
@@ -273,15 +537,35 @@ function renderPQList() {
     if (course && q.course !== course) return false;
     if (year && q.year !== year) return false;
     if (type && q.type !== type) return false;
+    if (bookmarkFilterActive && !bookmarkedIds[q.id]) return false;
     return true;
   });
 
   var list = document.getElementById('pqList');
   if (!filtered.length) {
     list.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><h3>No questions found</h3><p>Try adjusting your filters or add a new question.</p><button class="btn-primary" onclick="navigate(\'add\')">Add Question</button></div>';
+    document.getElementById('loadMoreWrap').style.display = 'none';
     return;
   }
-  list.innerHTML = filtered.map(renderPQItem).join('');
+
+  var start = 0;
+  var end = pqPage * perPage;
+  var pageItems = filtered.slice(start, end);
+
+  list.innerHTML = pageItems.map(renderPQItem).join('');
+
+  var loadMore = document.getElementById('loadMoreWrap');
+  if (end < filtered.length) {
+    loadMore.style.display = '';
+    document.getElementById('loadMoreBtn').textContent = 'Show ' + (filtered.length - end) + ' more questions';
+  } else {
+    loadMore.style.display = 'none';
+  }
+}
+
+function loadMoreQuestions() {
+  pqPage++;
+  renderPQListPage();
 }
 
 function renderPQItem(q) {
@@ -289,20 +573,37 @@ function renderPQItem(q) {
     ? '<button class="pq-reveal-toggle" onclick="toggleAnswer(' + q.id + ')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Reveal Answer</button>'
     : '<button class="pq-answer-toggle" onclick="toggleAnswer(' + q.id + ')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Show Answer</button>';
 
-  var courseLabel = q.course + (q.code ? ' (' + q.code + ')' : '');
+  var courseLabel = sanitize(q.course) + (q.code ? ' (' + sanitize(q.code) + ')' : '');
   var tags = '';
-  if (q.year) tags += '<span class="tag tag-year">' + q.year + '</span>';
-  if (q.topic) tags += '<span class="tag tag-topic">' + q.topic + '</span>';
-  if (q.type) tags += '<span class="tag tag-type">' + q.type + '</span>';
+  if (q.year) tags += '<span class="tag tag-year">' + sanitize(q.year) + '</span>';
+  if (q.topic) tags += '<span class="tag tag-topic">' + sanitize(q.topic) + '</span>';
+  if (q.type) tags += '<span class="tag tag-type">' + sanitize(q.type) + '</span>';
 
   var mcqHtml = renderMCQOptions(q);
-  var answerContent = mcqHtml || q.answer.replace(/\n/g, '<br>');
+  var answerContent = mcqHtml || sanitize(q.answer).replace(/\n/g, '<br>');
   var answerHtml = q.answer ? showAnsBtn + '<div class="pq-answer" id="ans-' + q.id + '">' + answerContent + '</div>' : '';
+
+  // Action buttons (edit/delete) for owner or admin/superuser
+  var actions = '';
+  var canEdit = currentUser && (currentUser.id === q.user_id || currentUserRole === 'admin' || currentUserRole === 'superuser');
+  if (canEdit) {
+    actions = '<div class="pq-actions">' +
+      '<button class="btn-icon btn-icon-sm" onclick="showEditQuestion(' + q.id + ')" title="Edit question">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+      '<button class="btn-icon btn-icon-sm" onclick="confirmDeleteQuestion(' + q.id + ')" title="Delete question">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button></div>';
+  }
+
+  var isBookmarked = bookmarkedIds[q.id];
+  var bookmarkBtn = '<button class="pq-bookmark' + (isBookmarked ? ' bookmarked' : '') + '" onclick="toggleBookmark(' + q.id + ')" title="Bookmark">' +
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="' + (isBookmarked ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>';
 
   return '<div class="pq-item" id="pq-' + q.id + '">' +
     '<div class="pq-item-header"><div class="pq-meta">' + tags + '</div>' +
-    '<span style="font-size:var(--text-xs);color:var(--color-text-faint);white-space:nowrap">' + courseLabel + '</span></div>' +
-    '<p class="pq-question">' + q.question + '</p>' + answerHtml + '</div>';
+    '<span style="display:flex;align-items:center;gap:var(--space-1)">' + bookmarkBtn +
+    '<span style="font-size:var(--text-xs);color:var(--color-text-faint);white-space:nowrap">' + courseLabel + '</span></span></div>' +
+    '<p class="pq-question">' + sanitize(q.question) + '</p>' + answerHtml +
+    actions + '</div>';
 }
 
 function toggleAnswer(id) {
@@ -319,6 +620,132 @@ function toggleAnswer(id) {
     btn.innerHTML = isShown
       ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg> Hide Answer'
       : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Show Answer';
+  }
+}
+
+/* ─── Edit / Delete Questions ─────────────────────── */
+function showEditQuestion(id) {
+  var q = questions.find(function(x) { return x.id === id; });
+  if (!q) return;
+  document.getElementById('editQuestionId').value = q.id;
+  document.getElementById('editLevel').value = q.level;
+  document.getElementById('editCourse').value = q.course;
+  document.getElementById('editCode').value = q.code || '';
+  document.getElementById('editYear').value = q.year || '';
+  document.getElementById('editTopic').value = q.topic || '';
+  document.getElementById('editType').value = q.type || 'Theory';
+  document.getElementById('editQuestion').value = q.question;
+  onEditTypeChange();
+
+  var parsed = extractMCQ(q);
+  if (parsed) {
+    document.getElementById('editOptA').value = parsed.options.A || '';
+    document.getElementById('editOptB').value = parsed.options.B || '';
+    document.getElementById('editOptC').value = parsed.options.C || '';
+    document.getElementById('editOptD').value = parsed.options.D || '';
+    document.getElementById('editCorrect').value = parsed.correct || '';
+  } else {
+    document.getElementById('editAnswer').value = q.answer || '';
+  }
+
+  document.getElementById('editModalOverlay').classList.remove('hidden');
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+function onEditTypeChange() {
+  var type = document.getElementById('editType').value;
+  var mcqDiv = document.getElementById('editMcqOptions');
+  var answerGroup = document.getElementById('editAnswerGroup');
+  if (type === 'MCQ') {
+    mcqDiv.style.display = 'block';
+    answerGroup.style.display = 'none';
+  } else {
+    mcqDiv.style.display = 'none';
+    answerGroup.style.display = '';
+  }
+}
+
+function closeEditModal() {
+  document.getElementById('editModalOverlay').classList.add('hidden');
+  document.getElementById('editModal').classList.add('hidden');
+}
+
+async function handleEditQuestion(e) {
+  e.preventDefault();
+  var id = parseInt(document.getElementById('editQuestionId').value);
+  var type = document.getElementById('editType').value;
+  var answer;
+  if (type === 'MCQ') {
+    var options = {};
+    options.A = document.getElementById('editOptA').value.trim();
+    options.B = document.getElementById('editOptB').value.trim();
+    options.C = document.getElementById('editOptC').value.trim();
+    options.D = document.getElementById('editOptD').value.trim();
+    var correct = document.getElementById('editCorrect').value;
+    if (!options.A || !options.B || !options.C || !options.D || !correct) {
+      showToast('error', 'Please fill all MCQ options and select the correct answer.');
+      return;
+    }
+    answer = JSON.stringify({ correct: correct, options: options });
+  } else {
+    answer = document.getElementById('editAnswer').value.trim();
+  }
+
+  var data = {
+    level: document.getElementById('editLevel').value,
+    course: document.getElementById('editCourse').value.trim(),
+    code: document.getElementById('editCode').value.trim(),
+    year: document.getElementById('editYear').value.trim(),
+    topic: document.getElementById('editTopic').value.trim(),
+    type: type,
+    question: document.getElementById('editQuestion').value.trim(),
+    answer: answer,
+  };
+
+  var res = await dbUpdateQuestion(id, data);
+  if (res.success) {
+    closeEditModal();
+    showToast('success', 'Question updated!');
+    await refreshQuestions();
+    renderPQList();
+    updateBadges();
+  } else {
+    showToast('error', res.error || 'Failed to update question.');
+  }
+}
+
+function confirmDeleteQuestion(id) {
+  var q = questions.find(function(x) { return x.id === id; });
+  if (!q) return;
+  if (!confirm('Delete this question?\n\n"' + q.question.substring(0, 80) + (q.question.length > 80 ? '…' : '') + '"')) return;
+  dbDeleteQuestion(id).then(function(res) {
+    if (res.success) {
+      showToast('success', 'Question deleted.');
+      refreshQuestions().then(function() { renderPQList(); updateBadges(); });
+    } else {
+      showToast('error', res.error || 'Failed to delete.');
+    }
+  });
+}
+
+/* ─── Bookmarks ──────────────────────────────────── */
+function toggleBookmarkFilter(active) {
+  bookmarkFilterActive = active;
+  renderPQList();
+}
+
+async function toggleBookmark(questionId) {
+  var res = await dbToggleBookmark(questionId);
+  if (res.success) {
+    bookmarkedIds[questionId] = res.bookmarked;
+    var btn = document.querySelector('#pq-' + questionId + ' .pq-bookmark');
+    if (btn) {
+      btn.classList.toggle('bookmarked', res.bookmarked);
+      btn.querySelector('svg').setAttribute('fill', res.bookmarked ? 'currentColor' : 'none');
+    }
+    showToast('success', res.bookmarked ? 'Bookmarked!' : 'Removed bookmark.');
+  } else {
+    showToast('error', res.error || 'Failed to toggle bookmark.');
   }
 }
 
@@ -355,15 +782,21 @@ function renderMaterialCard(m) {
   var icons = { 'Past Question PDF': '📄', 'Lecture Note': '📝', 'Textbook': '📚', 'Other': '📎' };
   var sizeStr = m.file_size ? formatFileSize(m.file_size) : '';
   var dateStr = m.created_at ? new Date(m.created_at).toLocaleDateString() : '';
+  var safeTitle = sanitize(m.title);
+  var safeType = sanitize(m.type);
+  var safeCourse = sanitize(m.course);
+  var safeCode = m.code ? sanitize(m.code) : '';
+  var safeUrl = sanitize(m.file_url);
+  var safeFileName = sanitize(m.file_name || 'download');
   return '<div class="material-card">' +
     '<div class="material-card-header">' +
     '<div class="material-icon">' + (icons[m.type] || '📄') + '</div>' +
-    '<div class="material-info"><div class="material-title" title="' + m.title + '">' + m.title + '</div>' +
-    '<div class="material-meta"><span class="tag tag-type">' + m.type + '</span><span>' + m.course + (m.code ? ' (' + m.code + ')' : '') + '</span></div>' +
+    '<div class="material-info"><div class="material-title" title="' + safeTitle + '">' + safeTitle + '</div>' +
+    '<div class="material-meta"><span class="tag tag-type">' + safeType + '</span><span>' + safeCourse + (m.code ? ' (' + safeCode + ')' : '') + '</span></div>' +
     '<div class="material-meta" style="margin-top:var(--space-1)">' + (sizeStr ? '<span>' + sizeStr + '</span>' : '') + (dateStr ? '<span>' + dateStr + '</span>' : '') + '</div></div></div>' +
     '<div class="material-footer">' +
-    '<button class="btn-primary btn-sm" onclick="window.open(\'' + m.file_url + '\',\'_blank\')">View</button>' +
-    '<button class="btn-ghost btn-sm" onclick="downloadMaterial(\'' + m.file_url + '\',\'' + (m.file_name || 'download') + '\')">Download</button></div></div>';
+    '<button class="btn-primary btn-sm" onclick="window.open(\'' + safeUrl + '\',\'_blank\')">View</button>' +
+    '<button class="btn-ghost btn-sm" onclick="downloadMaterial(\'' + safeUrl + '\',\'' + safeFileName + '\')">Download</button></div></div>';
 }
 
 function downloadMaterial(url, name) {
@@ -394,7 +827,7 @@ function onTypeChange() {
 
 async function handleAddQuestion(e) {
   e.preventDefault();
-  if (!currentUser) { openAuthModal(); return; }
+  if (!currentUser) { closeAuthModal(); return; }
 
   var type = document.getElementById('fType').value;
   var answer;
@@ -466,7 +899,12 @@ async function handleExtractPDF(e) {
     var formData = new FormData();
     formData.append('pdf', file);
 
-    var res = await fetch(SERVER_URL + '/api/extract', { method: 'POST', body: formData });
+    var token = await dbGetAuthToken();
+    var res = await fetch(SERVER_URL + '/api/extract', {
+      method: 'POST',
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+      body: formData,
+    });
     var data = await res.json();
 
     if (!data.success) throw new Error(data.error || 'Extraction failed');
@@ -493,7 +931,7 @@ function renderExtractedResults(data) {
   container.style.display = 'block';
 
   document.getElementById('extractSummary').innerHTML =
-    '<span>📄 <strong>' + data.fileName + '</strong> — ' + data.questionsCount + ' question' + (data.questionsCount !== 1 ? 's' : '') + ' detected</span>';
+    '<span>📄 <strong>' + sanitize(data.fileName) + '</strong> — ' + data.questionsCount + ' question' + (data.questionsCount !== 1 ? 's' : '') + ' detected</span>';
 
   var list = document.getElementById('extractedQuestions');
   list.innerHTML = data.questions.map(function(q, i) {
@@ -508,7 +946,7 @@ function renderExtractedResults(data) {
         var val = q.options[l] || '';
         optionsHtml += '<div class="extract-option">' +
           '<span class="extract-option-label">' + l + '.</span>' +
-          '<input class="extract-option-input" id="eopt-' + i + '-' + l + '" value="' + val.replace(/"/g, '&quot;') + '">' +
+          '<input class="extract-option-input" id="eopt-' + i + '-' + l + '" value="' + sanitize(val) + '">' +
           '</div>';
       });
       optionsHtml += '</div>' +
@@ -518,7 +956,7 @@ function renderExtractedResults(data) {
         '<option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>' +
         '</select></div>';
     } else {
-      answerHtml = '<textarea class="extract-answer-input" id="eanswer-' + i + '" placeholder="Enter answer / solution (optional)" rows="2">' + (q.answer || '') + '</textarea>';
+      answerHtml = '<textarea class="extract-answer-input" id="eanswer-' + i + '" placeholder="Enter answer / solution (optional)" rows="2">' + sanitize(q.answer || '') + '</textarea>';
     }
 
     return '<div class="extract-item">' +
@@ -526,7 +964,7 @@ function renderExtractedResults(data) {
       '<span class="extract-item-num">Question ' + (i + 1) + '</span>' +
       '<span class="extract-item-type ' + typeClass + '">' + typeClass + '</span>' +
       '</div>' +
-      '<textarea class="extract-question-text" id="eqtext-' + i + '" style="width:100%;min-height:60px" rows="2">' + q.question + '</textarea>' +
+      '<textarea class="extract-question-text" id="eqtext-' + i + '" style="width:100%;min-height:60px" rows="2">' + sanitize(q.question) + '</textarea>' +
       optionsHtml + answerHtml +
       '<div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:var(--space-2)">' +
       '<label><input type="checkbox" checked id="einclude-' + i + '"> Include in save</label></div>' +
@@ -622,7 +1060,7 @@ function handleFileSelect(e) {
 
 async function handleUploadMaterial(e) {
   e.preventDefault();
-  if (!currentUser) { openAuthModal(); return; }
+  if (!currentUser) { closeAuthModal(); return; }
 
   var file = document.getElementById('materialFile').files[0];
   if (!file) { showToast('error', 'Please select a file.'); return; }
@@ -685,7 +1123,7 @@ function onQuizLevelChange() {
   var cSel = document.getElementById('quizCourse');
   if (!level) { cSel.innerHTML = '<option value="">All Courses</option>'; return; }
   var courses = [...new Set(questions.filter(function(q) { return q.level === level; }).map(function(q) { return q.course; }))];
-  cSel.innerHTML = '<option value="">All Courses</option>' + courses.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  cSel.innerHTML = '<option value="">All Courses</option>' + courses.map(function(c) { return '<option value="' + sanitize(c) + '">' + sanitize(c) + '</option>'; }).join('');
 }
 
 function startQuiz() {
@@ -707,7 +1145,7 @@ function startQuiz() {
   pool = shuffleArray(pool);
   var count = qCount === 'all' ? pool.length : Math.min(parseInt(qCount), pool.length);
   quizQuestions = pool.slice(0, count);
-  quizIndex = 0; quizScore = 0; quizMissed = [];
+  quizIndex = 0; quizScore = 0; quizMissed = []; quizSelectedOption = '';
   quizTotal = quizQuestions.length; quizActive = true;
 
   document.getElementById('quizSetup').style.display = 'none';
@@ -723,23 +1161,60 @@ function showQuizQuestion() {
   document.getElementById('quizProgress').textContent = 'Question ' + (quizIndex + 1) + ' of ' + quizTotal;
   document.getElementById('quizProgressFill').style.width = ((quizIndex / quizTotal) * 100) + '%';
   document.getElementById('quizQuestionNum').textContent = 'Question ' + (quizIndex + 1);
-  document.getElementById('quizLevelBadge').textContent = q.level + 'L · ' + q.course;
-  document.getElementById('quizQuestionText').innerHTML = q.question;
+  document.getElementById('quizLevelBadge').textContent = q.level + 'L · ' + sanitize(q.course);
+  document.getElementById('quizQuestionText').innerHTML = sanitize(q.question);
 
-  var mcqHtml = renderMCQOptions(q);
   var ansSection = document.getElementById('quizAnswerSection');
   ansSection.classList.remove('show');
-  document.getElementById('quizAnswerBox').innerHTML = mcqHtml || q.answer.replace(/\n/g, '<br>');
   document.getElementById('quizShowBtn').style.display = '';
   document.getElementById('quizGotIt').style.display = 'none';
   document.getElementById('quizMissedIt').style.display = 'none';
+
+  // Render MCQ options as clickable cards
+  var optsEl = document.getElementById('quizOptions');
+  var parsed = extractMCQ(q.answer);
+  if (parsed) {
+    optsEl.style.display = 'flex';
+    var labels = ['A', 'B', 'C', 'D'];
+    optsEl.innerHTML = labels.map(function(l) {
+      return '<div class="quiz-option" data-opt="' + l + '" onclick="selectQuizOption(this,\'' + l + '\')">' +
+        '<input type="radio" name="qopt" id="qopt-' + l + '" style="display:none">' +
+        '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--radius-sm);background:var(--color-surface-dynamic);font-weight:600;font-size:var(--text-xs);flex-shrink:0">' + l + '</span>' +
+        '<span>' + sanitize(parsed.options[l] || '') + '</span></div>';
+    }).join('');
+  } else {
+    optsEl.style.display = 'none';
+  }
+
+  document.getElementById('quizAnswerBox').innerHTML = parsed ? '<strong>Answer:</strong> ' + sanitize(parsed.correct) : sanitize(q.answer).replace(/\n/g, '<br>');
+}
+
+function selectQuizOption(el, label) {
+  var parent = document.getElementById('quizOptions');
+  var all = parent.querySelectorAll('.quiz-option');
+  all.forEach(function(o) { o.classList.remove('selected'); });
+  el.classList.add('selected');
+  quizSelectedOption = label;
 }
 
 function showQuizAnswer() {
-  document.getElementById('quizAnswerSection').classList.add('show');
+  var ansSection = document.getElementById('quizAnswerSection');
+  ansSection.classList.add('show');
   document.getElementById('quizShowBtn').style.display = 'none';
   document.getElementById('quizGotIt').style.display = '';
   document.getElementById('quizMissedIt').style.display = '';
+
+  // Highlight correct/wrong for MCQ
+  var parsed = extractMCQ(quizQuestions[quizIndex].answer);
+  if (parsed) {
+    var optsEl = document.getElementById('quizOptions');
+    var all = optsEl.querySelectorAll('.quiz-option');
+    all.forEach(function(o) {
+      var l = o.getAttribute('data-opt');
+      if (l === parsed.correct) { o.classList.remove('selected', 'wrong'); o.classList.add('correct'); }
+      else if (l === quizSelectedOption) { o.classList.remove('selected', 'correct'); o.classList.add('wrong'); }
+    });
+  }
 }
 
 function quizGotIt() { quizScore++; quizIndex++; showQuizQuestion(); }
@@ -751,7 +1226,20 @@ function showQuizResults() {
   document.getElementById('quizResults').style.display = 'block';
 
   var pct = Math.round((quizScore / quizTotal) * 100);
+  var wrong = quizTotal - quizScore;
+
   document.getElementById('resultScore').textContent = quizScore + ' / ' + quizTotal;
+  document.getElementById('resultCorrect').textContent = quizScore;
+  document.getElementById('resultWrong').textContent = wrong;
+
+  var iconEl = document.getElementById('resultIcon');
+  var labelEl = document.getElementById('resultLabel');
+  if (pct === 100) { iconEl.textContent = '🏆'; labelEl.textContent = 'Perfect score! Excellent work!'; }
+  else if (pct >= 80) { iconEl.textContent = '🎉'; labelEl.textContent = 'Outstanding! Almost perfect.'; }
+  else if (pct >= 70) { iconEl.textContent = '👏'; labelEl.textContent = 'Great job! Keep it up.'; }
+  else if (pct >= 50) { iconEl.textContent = '👍'; labelEl.textContent = 'Good effort! Review the ones you missed.'; }
+  else if (pct >= 30) { iconEl.textContent = '💪'; labelEl.textContent = 'Keep practicing! You\'ll improve.'; }
+  else { iconEl.textContent = '📚'; labelEl.textContent = 'Time to hit the books! Try again.'; }
 
   var pctEl = document.getElementById('resultPct');
   pctEl.textContent = pct + '%';
@@ -759,18 +1247,19 @@ function showQuizResults() {
 
   var fillEl = document.getElementById('resultFill');
   fillEl.style.width = pct + '%';
-  fillEl.style.background = pct >= 70 ? 'var(--color-success)' : pct >= 50 ? 'var(--color-gold)' : 'var(--color-error)';
+  var fillClass = pct >= 70 ? 'good' : pct >= 50 ? 'ok' : 'bad';
+  fillEl.className = 'quiz-result-fill ' + fillClass;
 
   var missedContainer = document.getElementById('resultMissed');
   if (quizMissed.length) {
-    missedContainer.innerHTML = '<h3 style="margin-bottom:var(--space-4)">Missed Questions (' + quizMissed.length + ')</h3>' +
+    missedContainer.innerHTML = '<div class="quiz-missed-heading">Missed Questions (' + quizMissed.length + ')</div>' +
       quizMissed.map(function(q, i) {
-        var renderedAns = renderMCQOptions(q) || q.answer.replace(/\n/g, '<br>');
-        return '<div class="quiz-missed-item"><p><strong>' + (i + 1) + '.</strong> ' + q.question + '</p>' +
+        var renderedAns = renderMCQOptions(q) || sanitize(q.answer).replace(/\n/g, '<br>');
+        return '<div class="quiz-missed-item"><p><strong>' + (i + 1) + '.</strong> ' + sanitize(q.question) + '</p>' +
           '<div class="quiz-missed-answer"><strong>Answer:</strong> ' + renderedAns + '</div></div>';
       }).join('');
   } else {
-    missedContainer.innerHTML = '<p style="color:var(--color-success);font-size:var(--text-base)">Perfect score! No missed questions.</p>';
+    missedContainer.innerHTML = '<p style="color:var(--color-success);font-size:var(--text-base);text-align:center;padding:var(--space-4)">Perfect score! No missed questions.</p>';
   }
 
   document.getElementById('resultRetryBtn').style.display = quizMissed.length ? '' : 'none';
@@ -846,7 +1335,7 @@ function handleSearch(val) {
       (qu.topic || '').toLowerCase().includes(q) || (qu.answer || '').toLowerCase().includes(q);
   });
   navigate('search');
-  document.getElementById('searchTitle').textContent = '"' + val + '" — ' + results.length + ' result' + (results.length !== 1 ? 's' : '');
+  document.getElementById('searchTitle').textContent = '"' + sanitize(val) + '" — ' + results.length + ' result' + (results.length !== 1 ? 's' : '');
   document.getElementById('searchList').innerHTML = results.length
     ? results.map(function(r) { return renderPQItem(r); }).join('')
     : '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><h3>No results found</h3><p>Try different keywords.</p></div>';
