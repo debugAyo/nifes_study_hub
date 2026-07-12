@@ -54,7 +54,23 @@
 | `app/index.html` | Added `<link rel="icon">` to favicon |
 | `index.html` (landing) | Added `<link rel="icon">` to favicon |
 | `app/js/app.js` | Fixed pagination bug: `pqPage` now resets to 1 when switching levels |
-| `.gitignore` | Added `error.txt` |
+| `app/js/app.js` | Fixed material upload file type mismatch: JS validation now accepts DOC, DOCX, PPT, PPTX, TXT (matching HTML accept attribute) |
+| `.gitignore` | Added `error.txt`, `prompt.txt` |
+
+### 6. Additional Fixes
+
+| File | Change |
+|------|--------|
+| `server/index.js` | Removed unused `requireAuth` import (auth is applied in `routes/extract.js` instead) |
+| `server/index.js` | Added `/favicon.ico` route returning 204 to suppress browser 404 logs |
+| `app/js/app.js` | Fixed quiz filter: questions without answers now appear in CBT practice (uploaded PQs were excluded) |
+| `app/js/app.js` | Fixed `extractMCQ` calls: now passes question object instead of answer string |
+| `app/js/app.js` | Quiz shows "Answer not provided yet." for questions without answers |
+| `app/js/app.js` | MCQ highlight only marks correct answer when one is known |
+| `app/js/seed.js` | `extractMCQ` now returns options even when correct answer is empty |
+| `app/js/app.js` | Added level + search filters to Materials Library view |
+| `app/index.html` | Added level dropdown and search input to Materials Library |
+| `app/css/styles.css` | Added `.filter-input` style |
 
 ---
 
@@ -129,18 +145,19 @@ NEW FILES:
   package.json (root)                — Root package.json with build script
 
 MODIFIED FILES:
-  server/index.js                    — Helmet, CORS, rate limiting, auth
+  server/index.js                    — Helmet, CORS, rate limiting, favicon route, removed unused import
   server/routes/extract.js           — Auth middleware, input validation, sanitized errors
   server/.env                        — Added CORS_ORIGIN
   server/.env.example                — Updated template
   server/package.json                — Added helmet, express-rate-limit
   app/js/config.js                   — Dynamic SERVER_URL
   app/js/db.js                       — Added dbGetAuthToken()
-  app/js/app.js                      — Auth header in fetch, loading states, pagination fix
-  app/index.html                     — Added loading overlay, favicon
-  app/css/styles.css                 — Added spinner-lg, loading-overlay styles
+  app/js/app.js                      — Auth header in fetch, loading states, pagination fix, file type mismatch fix, CBT quiz fix, material filters
+  app/js/seed.js                     — extractMCQ returns options even without correct answer
+  app/index.html                     — Added loading overlay, favicon, material library filters
+  app/css/styles.css                 — Added spinner-lg, loading-overlay, filter-input styles
   index.html (landing)               — Added favicon
-  .gitignore                         — Added error.txt
+  .gitignore                         — Added error.txt, prompt.txt
 
 DELETED FILES:
   nifes-study-hub.html               — Orphaned duplicate prototype

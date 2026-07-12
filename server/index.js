@@ -6,7 +6,6 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const extractRoutes = require('./routes/extract');
-const { requireAuth } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -51,12 +50,15 @@ app.use('/api', apiLimiter);
 app.use('/api/extract', extractLimiter);
 
 // ─── Routes ───────────────────────────────────────
-app.use('/api', extractRoutes);
-
-// Health check (no auth)
+// Health check (no auth — defined before router to avoid requireAuth middleware)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.use('/api', extractRoutes);
+
+// Suppress favicon 404 logs
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

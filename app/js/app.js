@@ -792,7 +792,7 @@ function renderMaterialCard(m) {
     '<div class="material-card-header">' +
     '<div class="material-icon">' + (icons[m.type] || '📄') + '</div>' +
     '<div class="material-info"><div class="material-title" title="' + safeTitle + '">' + safeTitle + '</div>' +
-    '<div class="material-meta"><span class="tag tag-type">' + safeType + '</span><span>' + safeCourse + (m.code ? ' (' + safeCode + ')' : '') + '</span></div>' +
+    '<div class="material-meta"><span class="tag tag-type">' + safeType + '</span><span class="tag tag-type">' + sanitize(m.level) + 'L</span><span>' + safeCourse + (m.code ? ' (' + safeCode + ')' : '') + '</span></div>' +
     '<div class="material-meta" style="margin-top:var(--space-1)">' + (sizeStr ? '<span>' + sizeStr + '</span>' : '') + (dateStr ? '<span>' + dateStr + '</span>' : '') + '</div></div></div>' +
     '<div class="material-footer">' +
     '<button class="btn-primary btn-sm" onclick="window.open(\'' + safeUrl + '\',\'_blank\')">View</button>' +
@@ -1052,8 +1052,12 @@ function handleFileSelect(e) {
   if (!file) return;
   var maxSize = 10 * 1024 * 1024;
   if (file.size > maxSize) { showToast('error', 'File too large. Max 10MB.'); e.target.value = ''; return; }
-  var validTypes = ['application/pdf', 'image/png', 'image/jpeg'];
-  if (!validTypes.includes(file.type)) { showToast('error', 'Invalid type. Only PDF, PNG, JPG.'); e.target.value = ''; return; }
+  var validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain'];
+  if (!validTypes.includes(file.type)) { showToast('error', 'Invalid file type. Allowed: PDF, PNG, JPG, DOC, DOCX, PPT, PPTX, TXT.'); e.target.value = ''; return; }
   if (dropZone) dropZone.classList.add('has-file');
   if (info) info.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
 }
@@ -1136,7 +1140,7 @@ function startQuiz() {
   if (!level) { showToast('error', 'Please select a level.'); return; }
   if (matric) localStorage.setItem('nifes_matric', matric);
 
-  var pool = questions.filter(function(q) { return q.level === level && q.answer; });
+  var pool = questions.filter(function(q) { return q.level === level; });
   if (course) pool = pool.filter(function(q) { return q.course === course; });
   if (qType) pool = pool.filter(function(q) { return q.type === qType; });
 
@@ -1172,7 +1176,7 @@ function showQuizQuestion() {
 
   // Render MCQ options as clickable cards
   var optsEl = document.getElementById('quizOptions');
-  var parsed = extractMCQ(q.answer);
+  var parsed = extractMCQ(q);
   if (parsed) {
     optsEl.style.display = 'flex';
     var labels = ['A', 'B', 'C', 'D'];
@@ -1186,7 +1190,8 @@ function showQuizQuestion() {
     optsEl.style.display = 'none';
   }
 
-  document.getElementById('quizAnswerBox').innerHTML = parsed ? '<strong>Answer:</strong> ' + sanitize(parsed.correct) : sanitize(q.answer).replace(/\n/g, '<br>');
+  var ansText = q.answer ? (parsed ? (parsed.correct ? 'Answer: ' + parsed.correct : 'Correct answer not provided yet.') : sanitize(q.answer).replace(/\n/g, '<br>')) : 'Answer not provided yet.';
+  document.getElementById('quizAnswerBox').innerHTML = ansText;
 }
 
 function selectQuizOption(el, label) {
@@ -1205,13 +1210,13 @@ function showQuizAnswer() {
   document.getElementById('quizMissedIt').style.display = '';
 
   // Highlight correct/wrong for MCQ
-  var parsed = extractMCQ(quizQuestions[quizIndex].answer);
+  var parsed = extractMCQ(quizQuestions[quizIndex]);
   if (parsed) {
     var optsEl = document.getElementById('quizOptions');
     var all = optsEl.querySelectorAll('.quiz-option');
     all.forEach(function(o) {
       var l = o.getAttribute('data-opt');
-      if (l === parsed.correct) { o.classList.remove('selected', 'wrong'); o.classList.add('correct'); }
+      if (parsed.correct && l === parsed.correct) { o.classList.remove('selected', 'wrong'); o.classList.add('correct'); }
       else if (l === quizSelectedOption) { o.classList.remove('selected', 'correct'); o.classList.add('wrong'); }
     });
   }
@@ -1298,8 +1303,28 @@ function shuffleArray(arr) {
 
 /* ─── Materials View ──────────────────────────────── */
 function renderMaterialsView() {
-  var pqMats = materials.filter(function(m) { return m.type === 'Past Question PDF'; });
-  var otherMats = materials.filter(function(m) { return m.type !== 'Past Question PDF'; });
+  var levelFilter = document.getElementById('matFilterLevel')?.value || '';
+  var courseFilter = document.getElementById('matFilterCourse')?.value || '';
+
+  // Populate course dropdown from materials
+  var courseSel = document.getElementById('matFilterCourse');
+  if (courseSel) {
+    var courses = [...new Set(materials.map(function(m) { return m.course; }))].sort();
+    var prev = courseSel.value;
+    courseSel.innerHTML = '<option value="">All Courses</option>' + courses.map(function(c) {
+      return '<option value="' + sanitize(c) + '"' + (c === prev ? ' selected' : '') + '>' + sanitize(c) + '</option>';
+    }).join('');
+    if (prev) courseSel.value = prev;
+  }
+
+  var filtered = materials.filter(function(m) {
+    if (levelFilter && m.level !== levelFilter) return false;
+    if (courseFilter && m.course !== courseFilter) return false;
+    return true;
+  });
+
+  var pqMats = filtered.filter(function(m) { return m.type === 'Past Question PDF'; });
+  var otherMats = filtered.filter(function(m) { return m.type !== 'Past Question PDF'; });
 
   document.getElementById('pqMatsGrid').innerHTML = pqMats.map(renderMaterialCard).join('') ||
     '<div class="empty-state" style="grid-column:1/-1"><h3>No past question PDFs yet</h3><p>Upload PQs from the Contribute page.</p></div>';
@@ -1308,7 +1333,9 @@ function renderMaterialsView() {
 
   document.getElementById('pqMatsCount').textContent = pqMats.length + ' file' + (pqMats.length !== 1 ? 's' : '');
   document.getElementById('otherMatsCount').textContent = otherMats.length + ' file' + (otherMats.length !== 1 ? 's' : '');
-  document.getElementById('materialsSubtitle').textContent = pqMats.length + otherMats.length + ' files across all levels.';
+  var countText = filtered.length + ' file' + (filtered.length !== 1 ? 's' : '');
+  if (levelFilter) countText += ' (' + levelFilter + 'L)';
+  document.getElementById('materialsSubtitle').textContent = countText;
 }
 
 function switchMaterialsTab(tab) {

@@ -314,6 +314,17 @@
       </button>
       <h1 class="page-title">Materials Library</h1>
       <p class="page-subtitle" id="materialsSubtitle">Uploaded files — past question PDFs, lecture notes, and more.</p>
+      <div class="filter-bar">
+        <select class="filter-select" id="matFilterLevel" onchange="renderMaterialsView()">
+          <option value="">All Levels</option>
+          <option value="100">100 Level</option>
+          <option value="200">200 Level</option>
+          <option value="300">300 Level</option>
+        </select>
+        <select class="filter-select" id="matFilterCourse" onchange="renderMaterialsView()">
+          <option value="">All Courses</option>
+        </select>
+      </div>
       <div class="tab-bar">
         <button class="tab active" data-tab="pq-mats" onclick="switchMaterialsTab('pq-mats')">Past Question PDFs</button>
         <button class="tab" data-tab="other-mats" onclick="switchMaterialsTab('other-mats')">Other Materials</button>

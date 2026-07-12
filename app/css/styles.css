@@ -217,6 +217,9 @@ a,button,[role="button"],input,textarea,select{transition:color var(--transition
 .filter-bar{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-6)}
 .filter-select{padding:var(--space-2) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);font-size:var(--text-sm);color:var(--color-text);outline:none;cursor:pointer;min-width:140px;transition:border-color var(--transition),box-shadow var(--transition)}
 .filter-select:focus{border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-primary-highlight)}
+.filter-input{padding:var(--space-2) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);font-size:var(--text-sm);color:var(--color-text);outline:none;flex:1;min-width:200px;transition:border-color var(--transition),box-shadow var(--transition)}
+.filter-input::placeholder{color:var(--color-text-faint)}
+.filter-input:focus{border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-primary-highlight)}
 .pq-list{display:flex;flex-direction:column;gap:var(--space-3)}
 .pq-item{background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:var(--space-6);box-shadow:var(--shadow-sm);cursor:pointer;transition:box-shadow var(--transition);animation:fadeInUp var(--transition-slow) both;animation-delay:calc(var(--i,0) * 50ms)}
 .pq-item:hover{box-shadow:var(--shadow-md)}

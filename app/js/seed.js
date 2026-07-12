@@ -29,7 +29,7 @@ function extractMCQ(q) {
   if (!q || q.type !== 'MCQ' || !q.answer) return null;
   try {
     var parsed = JSON.parse(q.answer);
-    if (parsed && parsed.correct && parsed.options) return parsed;
+    if (parsed && parsed.options) return { options: parsed.options, correct: parsed.correct || '' };
   } catch {}
   return null;
 }
