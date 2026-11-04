@@ -71,7 +71,7 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
 .nav-logo-icon{width:36px;height:36px;border-radius:10px;background:var(--color-primary);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
 .nav-logo-text{font-size:1.15rem;font-weight:700;letter-spacing:-0.02em}
 .nav-logo-text span{color:var(--color-primary);font-weight:800}
-.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links{display:flex;align-items:center;gap:24px}
 .nav-link{font-size:0.9rem;font-weight:600;color:var(--color-text-muted);text-decoration:none;transition:color var(--transition)}
 .nav-link:hover{color:var(--color-primary)}
 .nav-actions{display:flex;align-items:center;gap:12px}
@@ -88,7 +88,7 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
 .btn-lg{padding:14px 28px;font-size:1rem;border-radius:var(--radius-lg)}
 
 /* ─── Hero Section ─── */
-.hero{padding:130px 0 60px;position:relative}
+.hero{padding:120px 0 50px;position:relative}
 .hero-grid{display:grid;grid-template-columns:1.08fr 0.92fr;gap:48px;align-items:center}
 @media(max-width:960px){.hero-grid{grid-template-columns:1fr;gap:40px;text-align:center}}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--radius-full);background:var(--color-primary-light);color:var(--color-primary);font-size:0.8rem;font-weight:700;margin-bottom:20px;border:1px solid var(--color-border)}
@@ -127,6 +127,11 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
 .preview-progress-fill{height:100%;width:78%;background:var(--color-primary);border-radius:4px}
 .preview-timer-num{font-family:monospace;font-size:1.8rem;font-weight:800;color:var(--color-text);line-height:1}
 
+/* ─── Scripture Banner Plaque ─── */
+.scripture-banner{background:var(--color-surface);border:1px solid var(--color-border);border-left:5px solid var(--color-primary);border-radius:var(--radius-lg);padding:28px 32px;margin:30px 0 60px;box-shadow:var(--shadow-sm);position:relative}
+.scripture-quote{font-family:var(--font-serif);font-size:clamp(1.15rem,2.2vw,1.4rem);font-style:italic;line-height:1.6;color:var(--color-text);margin-bottom:12px}
+.scripture-ref{font-size:0.85rem;font-weight:700;color:var(--color-accent);text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
 /* ─── Section Shared ─── */
 .section{padding:80px 0;border-top:1px solid var(--color-border)}
 .section-header{text-align:center;max-width:640px;margin:0 auto 50px}
@@ -144,7 +149,7 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
 .course-name{font-size:0.95rem;font-weight:700;margin-bottom:8px;line-height:1.4}
 .course-meta{font-size:0.8rem;color:var(--color-text-muted);margin-top:auto;padding-top:14px;border-top:1px solid var(--color-divider);display:flex;justify-content:space-between}
 
-/* ─── Features (Proportional & Clean Icons) ─── */
+/* ─── Features (Clean, Proportional Icons) ─── */
 .features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px}
 .feature-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:26px;box-shadow:var(--shadow-sm);transition:all var(--transition)}
 .feature-card:hover{border-color:var(--color-primary);box-shadow:var(--shadow-md)}
@@ -152,6 +157,17 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
 .feature-icon-box svg{width:20px;height:20px;flex-shrink:0}
 .feature-card h3{font-size:1.08rem;font-weight:700;margin-bottom:8px;color:var(--color-text)}
 .feature-card p{font-size:0.9rem;color:var(--color-text-muted);line-height:1.65}
+
+/* ─── Student Reviews ─── */
+.reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px}
+.review-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:26px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;justify-content:space-between;transition:all var(--transition)}
+.review-card:hover{border-color:var(--color-primary);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.review-stars{color:var(--color-accent);font-size:0.95rem;letter-spacing:3px;margin-bottom:14px}
+.review-text{font-size:0.92rem;color:var(--color-text);line-height:1.7;margin-bottom:20px}
+.review-author{display:flex;align-items:center;gap:12px;padding-top:16px;border-top:1px solid var(--color-divider)}
+.review-avatar{width:40px;height:40px;border-radius:50%;background:var(--color-primary-light);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;flex-shrink:0}
+.review-name{font-size:0.9rem;font-weight:700;color:var(--color-text)}
+.review-dept{font-size:0.75rem;color:var(--color-text-muted)}
 
 /* ─── How it Works ─── */
 .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
@@ -173,7 +189,7 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
 
 @media(max-width:640px){
   .nav-links{display:none}
-  .hero{padding:100px 0 40px}
+  .hero{padding:90px 0 30px}
 }
 </style>
 </head>
@@ -196,7 +212,7 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
       <nav class="nav-links">
         <a href="#courses" class="nav-link">Courses</a>
         <a href="#features" class="nav-link">CBT Simulator</a>
-        <a href="#features" class="nav-link">CGPA Calculator</a>
+        <a href="#reviews" class="nav-link">Student Reviews</a>
         <a href="#about" class="nav-link">About NIFES</a>
       </nav>
 
@@ -213,22 +229,22 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
   <div class="container">
     <div class="hero-grid">
       
-      <!-- Left: Value Proposition -->
+      <!-- Left: Value Proposition & Motto -->
       <div class="hero-content">
         <div class="hero-badge">
           <span class="hero-badge-dot"></span>
-          FUT Minna Academic Commission • Exam Prep Portal
+          Excellence in Faith • Distinction in Learning • FUT Minna
         </div>
         <h1>
           Master Your Exams.<br>
           <em>Study Smarter, Together.</em>
         </h1>
         <p>
-          The dedicated academic study hub for Federal University of Technology, Minna. Practice real timed CBT exams, review step-by-step past questions, and track your Nigerian 5.0 CGPA — 100% free.
+          The official academic study portal for Federal University of Technology, Minna. Practice real timed CBT exams, review step-by-step past questions, and track your Nigerian 5.0 CGPA — 100% free.
         </p>
         <div class="hero-buttons">
           <a href="app/index.html" class="btn btn-primary btn-lg">
-            Start CBT Practice
+            Start CBT Practice Test
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </a>
           <a href="#courses" class="btn btn-secondary btn-lg">Browse Past Questions</a>
@@ -261,7 +277,7 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
                 <div class="preview-userlevel">School of Engineering (SEET)</div>
               </div>
             </div>
-            <div class="preview-status">Online • 1st Semester</div>
+            <div class="preview-status">Active • 1st Semester</div>
           </div>
 
           <div class="preview-grid">
@@ -298,6 +314,21 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
       </div>
 
     </div>
+
+    <!-- ─── Academic Excellence Scripture Banner ─── -->
+    <div class="scripture-banner">
+      <div class="scripture-quote">
+        “As for these four youths, God gave them knowledge and skill in all literature and wisdom; and Daniel had understanding in all visions and dreams.”
+      </div>
+      <div class="scripture-ref">
+        <span>📖 Daniel 1:17</span>
+        <span>•</span>
+        <span>Academic Commission Foundation Scripture</span>
+        <span>•</span>
+        <span style="color:var(--color-primary)">“Diligence & Distinction in All Things”</span>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -412,7 +443,7 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
   </div>
 </section>
 
-<!-- ─── Core Features (Clean, proportional icons) ─── -->
+<!-- ─── Core Features ─── -->
 <section class="section" id="features">
   <div class="container">
     <div class="section-header">
@@ -494,6 +525,72 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
   </div>
 </section>
 
+<!-- ─── Student Reviews & Testimonials ─── -->
+<section class="section" id="reviews" style="background:var(--color-surface-offset)">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Student Testimonials</span>
+      <h2 class="section-title">Tested & Trusted by FUT Minna Students</h2>
+      <p class="section-desc">Here is what scholars across faculties say about studying with NIFES Study Hub.</p>
+    </div>
+
+    <div class="reviews-grid">
+      
+      <!-- Review 1 -->
+      <div class="review-card">
+        <div>
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">
+            “Practicing with the timed CBT simulator was a game changer for my MTH 201 exams. Learning to navigate questions under time pressure helped me bag an 'A' in my semester finals!”
+          </p>
+        </div>
+        <div class="review-author">
+          <div class="review-avatar">EO</div>
+          <div>
+            <div class="review-name">Emmanuel O.</div>
+            <div class="review-dept">300L Mechanical Engineering (SEET)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review 2 -->
+      <div class="review-card">
+        <div>
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">
+            “The step-by-step solutions for PHY 101 and CSC 101 broke down complex problems better than any textbook. My test scores jumped from average to top 5% of my class.”
+          </p>
+        </div>
+        <div class="review-author">
+          <div class="review-avatar">BA</div>
+          <div>
+            <div class="review-name">Blessing A.</div>
+            <div class="review-dept">200L Computer Science (SICT)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review 3 -->
+      <div class="review-card">
+        <div>
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">
+            “The Nigerian 5.0 CGPA calculator helped me map out my target grades from week one. Together with the Pomodoro study sprints, it kept me disciplined through exam week.”
+          </p>
+        </div>
+        <div class="review-author">
+          <div class="review-avatar">DK</div>
+          <div>
+            <div class="review-name">David K.</div>
+            <div class="review-dept">100L Chemical Engineering (SEET)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ─── How it Works ─── -->
 <section class="section">
   <div class="container">
@@ -533,17 +630,23 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
   </div>
 </section>
 
-<!-- ─── About NIFES Section ─── -->
+<!-- ─── About NIFES & Faith in Academic Excellence ─── -->
 <section class="section" id="about" style="background:var(--color-surface)">
   <div class="container">
-    <div style="max-width:760px;margin:0 auto;text-align:center">
-      <span class="section-badge">Academic Commission</span>
-      <h2 class="section-title" style="margin-bottom:16px">About NIFES FUT Minna</h2>
-      <p style="font-size:1.02rem;color:var(--color-text-muted);line-height:1.8;margin-bottom:20px">
-        The <strong>Nigeria Fellowship of Evangelical Students (NIFES)</strong> at the Federal University of Technology, Minna is an interdenominational fellowship committed to raising leaders who integrate Christian discipleship with academic excellence.
+    <div style="max-width:800px;margin:0 auto;text-align:center">
+      <span class="section-badge">Academic Commission & Fellowship</span>
+      <h2 class="section-title" style="margin-bottom:18px">Faith, Diligence & Academic Distinction</h2>
+      
+      <p style="font-size:1.05rem;color:var(--color-text);line-height:1.8;margin-bottom:20px;font-weight:500">
+        “Whatever you do, work at it with all your heart, as working for the Lord, not for human masters.” — <em>Colossians 3:23</em>
       </p>
-      <p style="font-size:0.95rem;color:var(--color-text-muted);line-height:1.75">
-        The NIFES Study Hub is an initiative of the <strong>NIFES Academic Commission</strong>, pooling verified past questions, exam simulations, and study tools to ensure every student has the resources they need to graduate with distinction.
+
+      <p style="font-size:0.98rem;color:var(--color-text-muted);line-height:1.8;margin-bottom:20px">
+        The <strong>Nigeria Fellowship of Evangelical Students (NIFES)</strong> at the Federal University of Technology, Minna is an interdenominational fellowship committed to raising leaders who integrate Christian discipleship with academic brilliance. We believe that God calls every student to be the head and not the tail — reflecting His wisdom in lecture halls, laboratories, and examination centers.
+      </p>
+      
+      <p style="font-size:0.95rem;color:var(--color-text-muted);line-height:1.8">
+        The NIFES Study Hub is an initiative of the <strong>NIFES Academic Commission</strong>, pooling verified past examination questions, timed CBT simulations, and peer study tools so that every Christian student has the guidance and resources to graduate with first-class honors and godly character.
       </p>
     </div>
   </div>
