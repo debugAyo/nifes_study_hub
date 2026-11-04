@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBT Practice Simulator — NIFES Study Hub FUT Minna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0d5c3a">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
+<style>
+.sample-cbt{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:32px;box-shadow:var(--shadow-md);margin:40px 0}
+.sample-cbt-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--color-divider);flex-wrap:wrap;gap:12px}
+.cbt-timer-badge{font-family:monospace;font-size:1.1rem;font-weight:800;color:var(--color-primary);background:var(--color-primary-light);padding:6px 14px;border-radius:var(--radius-full);border:1px solid var(--color-border)}
+.sample-option{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:var(--radius-md);border:1px solid var(--color-border);margin-bottom:10px;cursor:pointer;background:var(--color-surface-offset);transition:all var(--transition)}
+.sample-option:hover{border-color:var(--color-primary);background:var(--color-surface)}
+.sample-option.selected{border-color:var(--color-primary);background:var(--color-primary-light);font-weight:700}
+.opt-label{width:28px;height:28px;border-radius:50%;background:var(--color-surface);border:1px solid var(--color-border);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/index.html" class="nav-logo">
+        <div class="nav-logo-icon">
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+            <path d="m9 9 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="nav-logo-text">NIFES <span>Study Hub</span></div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="/index.html" class="nav-link">Home</a>
+        <a href="/courses.html" class="nav-link">Courses</a>
+        <a href="/cbt-practice.html" class="nav-link active">CBT Simulator</a>
+        <a href="/cgpa-calculator.html" class="nav-link">CGPA Calculator</a>
+        <a href="/about.html" class="nav-link">About NIFES</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+        <a href="/app/index.html" class="btn btn-primary">Launch CBT App</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <div class="container">
+      <div class="page-header-badge">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--color-primary)"></span>
+        Real Exam Simulation Engine
+      </div>
+      <h1>FUT Minna CBT Exam Simulator</h1>
+      <p>Simulate official computer-based examinations with authentic countdown timers, question palette navigation, flagging tools, and comprehensive solutions.</p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      
+      <!-- Features Grid -->
+      <div class="grid-3">
+        
+        <div class="card">
+          <div class="icon-box" style="margin-bottom:16px">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Strict Countdown Timer</h3>
+          <p style="font-size:0.9rem;color:var(--color-text-muted);line-height:1.6">
+            Timed to exact faculty specifications (e.g. 25 minutes for 20 questions) with auto-submit protection when time expires.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="icon-box" style="margin-bottom:16px">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Question Palette Navigator</h3>
+          <p style="font-size:0.9rem;color:var(--color-text-muted);line-height:1.6">
+            Jump instantly to any question number. Visual color states show Answered (green), Flagged (gold), and Unanswered.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="icon-box" style="margin-bottom:16px">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          </div>
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Flag for Review</h3>
+          <p style="font-size:0.9rem;color:var(--color-text-muted);line-height:1.6">
+            Bookmark tricky questions with one click so you can return to double-check calculations before submitting.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Live Interactive CBT Sample Preview -->
+      <div class="sample-cbt">
+        <div class="sample-cbt-header">
+          <div>
+            <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;color:var(--color-accent);letter-spacing:0.06em">Live CBT Simulation Preview</div>
+            <h3 style="font-size:1.25rem;font-weight:800;margin-top:2px">MTH 101 Mock Exam • Question 1 of 20</h3>
+          </div>
+          <div class="cbt-timer-badge">⏱️ Time Remaining: 24:18</div>
+        </div>
+
+        <div style="font-size:1.05rem;font-weight:600;margin-bottom:20px;line-height:1.6">
+          If \( f(x) = 3x^2 - 5x + 2 \), find the derivative \( f'(x) \) at \( x = 4 \):
+        </div>
+
+        <div class="sample-option" onclick="pickOption(this)">
+          <div class="opt-label">A</div>
+          <div>14</div>
+        </div>
+
+        <div class="sample-option selected" onclick="pickOption(this)">
+          <div class="opt-label" style="background:var(--color-primary);color:#fff">B</div>
+          <div>19 &nbsp; <span style="font-size:0.8rem;color:var(--color-primary);font-weight:700">(Correct: \( f'(x) = 6x - 5 \implies 6(4) - 5 = 19 \))</span></div>
+        </div>
+
+        <div class="sample-option" onclick="pickOption(this)">
+          <div class="opt-label">C</div>
+          <div>24</div>
+        </div>
+
+        <div class="sample-option" onclick="pickOption(this)">
+          <div class="opt-label">D</div>
+          <div>31</div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--color-divider);flex-wrap:wrap;gap:12px">
+          <button class="btn btn-secondary">⚑ Flag for Review</button>
+          <a href="/app/index.html" class="btn btn-primary btn-lg">Launch Full CBT Exam Mode →</a>
+        </div>
+      </div>
+
+      <!-- CBT Exam Packages Available -->
+      <div style="text-align:center;margin-top:60px">
+        <h2 class="section-title">Available Mock Tests Ready for Practice</h2>
+        <p class="section-desc">Select any examination package to practice directly in the Study Hub.</p>
+      </div>
+
+      <div class="grid-3" style="margin-top:36px">
+        
+        <div class="card">
+          <span style="font-size:0.75rem;font-weight:800;color:var(--color-primary);text-transform:uppercase;margin-bottom:8px">100 Level Exam</span>
+          <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:6px">MTH 101 CBT Simulation</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);margin-bottom:18px">20 Questions • 25 Minutes • Calculus, Vectors & Matrices</p>
+          <a href="/app/index.html" class="btn btn-primary" style="width:100%">Start MTH 101 CBT →</a>
+        </div>
+
+        <div class="card">
+          <span style="font-size:0.75rem;font-weight:800;color:var(--color-primary);text-transform:uppercase;margin-bottom:8px">100 Level Exam</span>
+          <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:6px">PHY 101 CBT Simulation</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);margin-bottom:18px">20 Questions • 25 Minutes • Mechanics, Work, Energy & Waves</p>
+          <a href="/app/index.html" class="btn btn-primary" style="width:100%">Start PHY 101 CBT →</a>
+        </div>
+
+        <div class="card">
+          <span style="font-size:0.75rem;font-weight:800;color:var(--color-primary);text-transform:uppercase;margin-bottom:8px">200 Level Exam</span>
+          <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:6px">MTH 201 CBT Simulation</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);margin-bottom:18px">20 Questions • 30 Minutes • Differential Equations & Series</p>
+          <a href="/app/index.html" class="btn btn-primary" style="width:100%">Start MTH 201 CBT →</a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-nav">
+      <a href="/index.html" class="footer-link">Home</a>
+      <a href="/courses.html" class="footer-link">Courses</a>
+      <a href="/cbt-practice.html" class="footer-link">CBT Simulator</a>
+      <a href="/cgpa-calculator.html" class="footer-link">CGPA Calculator</a>
+      <a href="/about.html" class="footer-link">About NIFES</a>
+      <a href="/app/index.html" class="footer-link">Study Hub App</a>
+    </div>
+    <p>© 2026 NIFES Study Hub — Federal University of Technology, Minna</p>
+  </div>
+</footer>
+
+<script>
+function pickOption(el) {
+  document.querySelectorAll('.sample-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// Theme management
+(function() {
+  var saved = localStorage.getItem('nifes_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+})();
+
+function updateThemeUI(theme) {
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme') || 'light';
+  var next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('nifes_theme', next);
+  updateThemeUI(next);
+}
+</script>
+</body>
+</html>

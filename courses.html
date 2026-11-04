@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Courses & Past Questions — NIFES Study Hub FUT Minna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0d5c3a">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
+<style>
+.filter-bar{display:flex;gap:10px;margin-bottom:32px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:8px 16px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:var(--color-surface);font-size:0.85rem;font-weight:700;color:var(--color-text-muted);cursor:pointer;transition:all var(--transition)}
+.filter-btn:hover{border-color:var(--color-primary);color:var(--color-primary)}
+.filter-btn.active{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+[data-theme="dark"] .filter-btn.active{color:#0a120e}
+.search-box{width:100%;max-width:360px;margin-left:auto;position:relative}
+.search-input{width:100%;padding:10px 16px 10px 38px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font-size:0.9rem}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--color-text-faint)}
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/index.html" class="nav-logo">
+        <div class="nav-logo-icon">
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+            <path d="m9 9 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="nav-logo-text">NIFES <span>Study Hub</span></div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="/index.html" class="nav-link">Home</a>
+        <a href="/courses.html" class="nav-link active">Courses</a>
+        <a href="/cbt-practice.html" class="nav-link">CBT Simulator</a>
+        <a href="/cgpa-calculator.html" class="nav-link">CGPA Calculator</a>
+        <a href="/about.html" class="nav-link">About NIFES</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+        <a href="/app/index.html" class="btn btn-primary">Open App</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <div class="container">
+      <div class="page-header-badge">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--color-primary)"></span>
+        Academic Commission Repository • FUT Minna
+      </div>
+      <h1>Courses & Past Questions Directory</h1>
+      <p>Browse verified past questions, exam breakdowns, and practice question sets across 100L, 200L, and 300L faculties.</p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterLevel('all', this)">All Courses</button>
+        <button class="filter-btn" onclick="filterLevel('100L', this)">100 Level</button>
+        <button class="filter-btn" onclick="filterLevel('200L', this)">200 Level</button>
+        <button class="filter-btn" onclick="filterLevel('300L', this)">300 Level</button>
+        
+        <div class="search-box">
+          <svg class="icon search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="search-input" id="courseSearch" placeholder="Search course code or title..." oninput="searchCourses(this.value)">
+        </div>
+      </div>
+
+      <!-- Courses Grid -->
+      <div class="grid-3" id="coursesGrid">
+        
+        <!-- MTH 101 -->
+        <div class="card course-item" data-level="100L" data-title="mth 101 elementary mathematics i">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">MTH 101</span>
+            <span style="font-size:0.75rem;font-weight:700;padding:3px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">100L • 3 Units</span>
+          </div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Elementary Mathematics I</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
+            Differential and integral calculus, mathematical induction, binomial theorem, trigonometric functions, and quadratic equations.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
+            ✓ 60+ Verified Past Questions (2020–2024)
+          </div>
+          <a href="/app/index.html" class="btn btn-secondary w-full" style="width:100%">Practice CBT Exam →</a>
+        </div>
+
+        <!-- PHY 101 -->
+        <div class="card course-item" data-level="100L" data-title="phy 101 general physics i mechanics">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">PHY 101</span>
+            <span style="font-size:0.75rem;font-weight:700;padding:3px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">100L • 3 Units</span>
+          </div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">General Physics I (Mechanics)</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
+            Vectors, projectile motion, Newton's laws of motion, work, energy, rotational dynamics, simple harmonic motion, and fluid mechanics.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
+            ✓ 50+ Verified Past Questions (2019–2024)
+          </div>
+          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+        </div>
+
+        <!-- CHM 101 -->
+        <div class="card course-item" data-level="100L" data-title="chm 101 general chemistry i">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">CHM 101</span>
+            <span style="font-size:0.75rem;font-weight:700;padding:3px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">100L • 3 Units</span>
+          </div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">General Chemistry I</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
+            Atomic structure, chemical bonding, periodic table trends, stoichiometry, chemical equilibrium, acids and bases, and reaction kinetics.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
+            ✓ 45+ Verified Past Questions (2021–2024)
+          </div>
+          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+        </div>
+
+        <!-- GST 101 -->
+        <div class="card course-item" data-level="100L" data-title="gst 101 use of english communication">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">GST 101</span>
+            <span style="font-size:0.75rem;font-weight:700;padding:3px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">100L • 2 Units</span>
+          </div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Use of English & Communication</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
+            Grammar, sentence structure, lexical choices, reading comprehension, outlining, study strategies, and academic report writing.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
+            ✓ 50+ Verified Past Questions (2020–2024)
+          </div>
+          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+        </div>
+
+        <!-- CSC 101 -->
+        <div class="card course-item" data-level="100L" data-title="csc 101 introduction to computer science">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">CSC 101</span>
+            <span style="font-size:0.75rem;font-weight:700;padding:3px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">100L • 2 Units</span>
+          </div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Intro to Computer Science</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
+            History of computing, hardware/software components, binary & octal number systems, algorithm design, pseudocode, and flowcharts.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
+            ✓ 40+ Verified Past Questions (2021–2024)
+          </div>
+          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+        </div>
+
+        <!-- MTH 201 -->
+        <div class="card course-item" data-level="200L" data-title="mth 201 mathematical methods i differential equations">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">MTH 201</span>
+            <span style="font-size:0.75rem;font-weight:700;padding:3px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">200L • 3 Units</span>
+          </div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Mathematical Methods I</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
+            First and second order ordinary differential equations, Taylor series, linear algebra, eigenvalues, and Fourier series.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
+            ✓ 35+ Verified Past Questions (2020–2024)
+          </div>
+          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+        </div>
+
+        <!-- MEE 201 -->
+        <div class="card course-item" data-level="200L" data-title="mee 201 applied mechanics statics">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">MEE 201</span>
+            <span style="font-size:0.75rem;font-weight:700;padding:3px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">200L • 3 Units</span>
+          </div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Applied Mechanics (Statics)</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
+            Equilibrium of rigid bodies, 2D and 3D force systems, truss analysis via joints and sections, friction, and centroid calculation.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
+            ✓ 30+ Verified Past Questions (2019–2023)
+          </div>
+          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+        </div>
+
+        <!-- EEE 201 -->
+        <div class="card course-item" data-level="200L" data-title="eee 201 applied electricity i circuits">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">EEE 201</span>
+            <span style="font-size:0.75rem;font-weight:700;padding:3px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">200L • 2 Units</span>
+          </div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Applied Electricity I</h3>
+          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
+            DC network theorems, Kirchhoff's laws, Thévenin and Norton equivalents, alternating currents, phasors, and power factor.
+          </p>
+          <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
+            ✓ 25+ Verified Past Questions (2021–2024)
+          </div>
+          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-nav">
+      <a href="/index.html" class="footer-link">Home</a>
+      <a href="/courses.html" class="footer-link">Courses</a>
+      <a href="/cbt-practice.html" class="footer-link">CBT Simulator</a>
+      <a href="/cgpa-calculator.html" class="footer-link">CGPA Calculator</a>
+      <a href="/about.html" class="footer-link">About NIFES</a>
+      <a href="/app/index.html" class="footer-link">Study Hub App</a>
+    </div>
+    <p>© 2026 NIFES Study Hub — Federal University of Technology, Minna (FUT Minna)</p>
+    <p style="margin-top:8px;font-size:0.8rem;color:var(--color-text-faint)">
+      Curated by the NIFES Academic Commission • Built by <a href="https://github.com/debugAyo" target="_blank">DebugAyo</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+function filterLevel(level, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  var cards = document.querySelectorAll('.course-item');
+  cards.forEach(card => {
+    if (level === 'all' || card.getAttribute('data-level') === level) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+function searchCourses(query) {
+  var q = query.toLowerCase().trim();
+  var cards = document.querySelectorAll('.course-item');
+  cards.forEach(card => {
+    var title = card.getAttribute('data-title') || '';
+    if (!q || title.includes(q)) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+// Theme management
+(function() {
+  var saved = localStorage.getItem('nifes_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+})();
+
+function updateThemeUI(theme) {
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme') || 'light';
+  var next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('nifes_theme', next);
+  updateThemeUI(next);
+}
+</script>
+</body>
+</html>

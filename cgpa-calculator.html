@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.0 CGPA Calculator — NIFES Study Hub FUT Minna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0d5c3a">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
+<style>
+.calc-table{width:100%;border-collapse:collapse;margin:24px 0}
+.calc-table th{background:var(--color-surface-offset);padding:12px 14px;text-align:left;font-size:0.82rem;font-weight:700;text-transform:uppercase;color:var(--color-text-muted);border-bottom:1px solid var(--color-border)}
+.calc-table td{padding:10px 14px;border-bottom:1px solid var(--color-divider)}
+.calc-input{width:100%;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font-size:0.9rem}
+.calc-select{width:100%;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font-size:0.9rem}
+.result-card{background:linear-gradient(135deg,var(--color-surface),var(--color-surface-offset));border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:32px;text-align:center;box-shadow:var(--shadow-md)}
+.result-num{font-family:var(--font-sans);font-size:3.5rem;font-weight:800;color:var(--color-primary);line-height:1;margin:12px 0}
+.result-badge{display:inline-block;padding:6px 16px;border-radius:var(--radius-full);background:var(--color-primary-light);color:var(--color-primary);font-size:0.9rem;font-weight:700}
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/index.html" class="nav-logo">
+        <div class="nav-logo-icon">
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+            <path d="m9 9 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="nav-logo-text">NIFES <span>Study Hub</span></div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="/index.html" class="nav-link">Home</a>
+        <a href="/courses.html" class="nav-link">Courses</a>
+        <a href="/cbt-practice.html" class="nav-link">CBT Simulator</a>
+        <a href="/cgpa-calculator.html" class="nav-link active">CGPA Calculator</a>
+        <a href="/about.html" class="nav-link">About NIFES</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+        <a href="/app/index.html" class="btn btn-primary">Open App</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <div class="container">
+      <div class="page-header-badge">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--color-primary)"></span>
+        Official FUT Minna 5.0 Grading Standard
+      </div>
+      <h1>Nigerian 5.0 CGPA & Target Planner</h1>
+      <p>Calculate your semester Grade Point Average (GPA) and Cumulative CGPA according to exact FUT Minna 5.0 grading scale with real-time class classification.</p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      
+      <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:40px;align-items:start">
+        
+        <!-- Left: Interactive GPA Calculator Table -->
+        <div class="card" style="padding:32px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h2 style="font-size:1.25rem;font-weight:800">Semester Course Grades</h2>
+            <button class="btn btn-secondary btn-sm" onclick="addCourseRow()">+ Add Course</button>
+          </div>
+
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th style="width:45%">Course</th>
+                <th style="width:25%">Units</th>
+                <th style="width:20%">Grade</th>
+                <th style="width:10%"></th>
+              </tr>
+            </thead>
+            <tbody id="courseTableBody">
+              <tr>
+                <td><input type="text" class="calc-input" value="MTH 101" placeholder="e.g. MTH 101"></td>
+                <td>
+                  <select class="calc-select unit-input" onchange="calculateGPA()">
+                    <option value="1">1 Unit</option>
+                    <option value="2">2 Units</option>
+                    <option value="3" selected>3 Units</option>
+                    <option value="4">4 Units</option>
+                    <option value="5">5 Units</option>
+                    <option value="6">6 Units</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="calc-select grade-input" onchange="calculateGPA()">
+                    <option value="5" selected>A (5.0)</option>
+                    <option value="4">B (4.0)</option>
+                    <option value="3">C (3.0)</option>
+                    <option value="2">D (2.0)</option>
+                    <option value="1">E (1.0)</option>
+                    <option value="0">F (0.0)</option>
+                  </select>
+                </td>
+                <td style="text-align:center"><button style="color:var(--color-text-faint);cursor:pointer;font-size:1.1rem;background:none;border:none" onclick="removeRow(this)">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" class="calc-input" value="PHY 101" placeholder="e.g. PHY 101"></td>
+                <td>
+                  <select class="calc-select unit-input" onchange="calculateGPA()">
+                    <option value="1">1 Unit</option>
+                    <option value="2">2 Units</option>
+                    <option value="3" selected>3 Units</option>
+                    <option value="4">4 Units</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="calc-select grade-input" onchange="calculateGPA()">
+                    <option value="5" selected>A (5.0)</option>
+                    <option value="4">B (4.0)</option>
+                    <option value="3">C (3.0)</option>
+                    <option value="2">D (2.0)</option>
+                    <option value="1">E (1.0)</option>
+                    <option value="0">F (0.0)</option>
+                  </select>
+                </td>
+                <td style="text-align:center"><button style="color:var(--color-text-faint);cursor:pointer;font-size:1.1rem;background:none;border:none" onclick="removeRow(this)">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" class="calc-input" value="CHM 101" placeholder="e.g. CHM 101"></td>
+                <td>
+                  <select class="calc-select unit-input" onchange="calculateGPA()">
+                    <option value="1">1 Unit</option>
+                    <option value="2">2 Units</option>
+                    <option value="3" selected>3 Units</option>
+                    <option value="4">4 Units</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="calc-select grade-input" onchange="calculateGPA()">
+                    <option value="5">A (5.0)</option>
+                    <option value="4" selected>B (4.0)</option>
+                    <option value="3">C (3.0)</option>
+                    <option value="2">D (2.0)</option>
+                    <option value="1">E (1.0)</option>
+                    <option value="0">F (0.0)</option>
+                  </select>
+                </td>
+                <td style="text-align:center"><button style="color:var(--color-text-faint);cursor:pointer;font-size:1.1rem;background:none;border:none" onclick="removeRow(this)">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" class="calc-input" value="GST 101" placeholder="e.g. GST 101"></td>
+                <td>
+                  <select class="calc-select unit-input" onchange="calculateGPA()">
+                    <option value="1">1 Unit</option>
+                    <option value="2" selected>2 Units</option>
+                    <option value="3">3 Units</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="calc-select grade-input" onchange="calculateGPA()">
+                    <option value="5" selected>A (5.0)</option>
+                    <option value="4">B (4.0)</option>
+                    <option value="3">C (3.0)</option>
+                    <option value="2">D (2.0)</option>
+                    <option value="1">E (1.0)</option>
+                    <option value="0">F (0.0)</option>
+                  </select>
+                </td>
+                <td style="text-align:center"><button style="color:var(--color-text-faint);cursor:pointer;font-size:1.1rem;background:none;border:none" onclick="removeRow(this)">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid var(--color-divider)">
+            <button class="btn btn-secondary btn-sm" onclick="addCourseRow()">+ Add Another Course</button>
+            <div style="font-size:0.88rem;color:var(--color-text-muted)">
+              Total Units: <strong id="totalUnitsText">11</strong> &nbsp;|&nbsp; Quality Points: <strong id="totalPointsText">52</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Results Card & Classification Scale -->
+        <div>
+          <div class="result-card">
+            <span style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-accent)">Calculated Semester GPA</span>
+            <div class="result-num" id="gpaResult">4.73</div>
+            <div class="result-badge" id="gpaClassBadge">First Class Standing 🏆</div>
+            <p style="font-size:0.85rem;color:var(--color-text-muted);margin-top:16px">
+              Calculated on the FUT Minna 5.0 scale. Save and track your academic standing semester-by-semester in the Study Hub.
+            </p>
+            <a href="/app/index.html" class="btn btn-primary" style="margin-top:20px;width:100%">Save to Student Profile →</a>
+          </div>
+
+          <!-- Official FUT Minna Degree Classification Table -->
+          <div class="card" style="margin-top:24px;padding:22px">
+            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:12px">FUT Minna Degree Classification</h3>
+            <div style="font-size:0.84rem;line-height:1.8;color:var(--color-text-muted)">
+              <div style="display:flex;justify-content:space-between"><span>4.50 – 5.00:</span> <strong style="color:var(--color-primary)">First Class Honours</strong></div>
+              <div style="display:flex;justify-content:space-between"><span>3.50 – 4.49:</span> <strong>Second Class Upper (2:1)</strong></div>
+              <div style="display:flex;justify-content:space-between"><span>2.40 – 3.49:</span> <strong>Second Class Lower (2:2)</strong></div>
+              <div style="display:flex;justify-content:space-between"><span>1.50 – 2.39:</span> <strong>Third Class</strong></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-nav">
+      <a href="/index.html" class="footer-link">Home</a>
+      <a href="/courses.html" class="footer-link">Courses</a>
+      <a href="/cbt-practice.html" class="footer-link">CBT Simulator</a>
+      <a href="/cgpa-calculator.html" class="footer-link">CGPA Calculator</a>
+      <a href="/about.html" class="footer-link">About NIFES</a>
+      <a href="/app/index.html" class="footer-link">Study Hub App</a>
+    </div>
+    <p>© 2026 NIFES Study Hub — Federal University of Technology, Minna</p>
+  </div>
+</footer>
+
+<script>
+function calculateGPA() {
+  var unitInputs = document.querySelectorAll('.unit-input');
+  var gradeInputs = document.querySelectorAll('.grade-input');
+  
+  var totalUnits = 0;
+  var totalPoints = 0;
+  
+  for (var i = 0; i < unitInputs.length; i++) {
+    var u = parseFloat(unitInputs[i].value) || 0;
+    var g = parseFloat(gradeInputs[i].value) || 0;
+    totalUnits += u;
+    totalPoints += (u * g);
+  }
+  
+  var gpa = totalUnits > 0 ? (totalPoints / totalUnits).toFixed(2) : '0.00';
+  document.getElementById('gpaResult').textContent = gpa;
+  document.getElementById('totalUnitsText').textContent = totalUnits;
+  document.getElementById('totalPointsText').textContent = totalPoints;
+  
+  var badge = document.getElementById('gpaClassBadge');
+  var val = parseFloat(gpa);
+  if (val >= 4.50) {
+    badge.textContent = 'First Class Standing 🏆';
+    badge.style.background = 'var(--color-primary-light)';
+    badge.style.color = 'var(--color-primary)';
+  } else if (val >= 3.50) {
+    badge.textContent = 'Second Class Upper (2:1) 🎖️';
+    badge.style.background = 'var(--color-accent-light)';
+    badge.style.color = 'var(--color-accent)';
+  } else if (val >= 2.40) {
+    badge.textContent = 'Second Class Lower (2:2)';
+    badge.style.background = 'var(--color-surface-offset)';
+    badge.style.color = 'var(--color-text)';
+  } else {
+    badge.textContent = 'Third Class';
+    badge.style.background = 'var(--color-surface-offset)';
+    badge.style.color = 'var(--color-text-muted)';
+  }
+}
+
+function addCourseRow() {
+  var tbody = document.getElementById('courseTableBody');
+  var tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="calc-input" placeholder="Course Code"></td>
+    <td>
+      <select class="calc-select unit-input" onchange="calculateGPA()">
+        <option value="1">1 Unit</option>
+        <option value="2">2 Units</option>
+        <option value="3" selected>3 Units</option>
+        <option value="4">4 Units</option>
+      </select>
+    </td>
+    <td>
+      <select class="calc-select grade-input" onchange="calculateGPA()">
+        <option value="5" selected>A (5.0)</option>
+        <option value="4">B (4.0)</option>
+        <option value="3">C (3.0)</option>
+        <option value="2">D (2.0)</option>
+        <option value="1">E (1.0)</option>
+        <option value="0">F (0.0)</option>
+      </select>
+    </td>
+    <td style="text-align:center"><button style="color:var(--color-text-faint);cursor:pointer;font-size:1.1rem;background:none;border:none" onclick="removeRow(this)">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateGPA();
+}
+
+function removeRow(btn) {
+  var row = btn.closest('tr');
+  var tbody = document.getElementById('courseTableBody');
+  if (tbody.querySelectorAll('tr').length > 1) {
+    row.remove();
+    calculateGPA();
+  }
+}
+
+// Initial calculation
+calculateGPA();
+
+// Theme management
+(function() {
+  var saved = localStorage.getItem('nifes_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+})();
+
+function updateThemeUI(theme) {
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme') || 'light';
+  var next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('nifes_theme', next);
+  updateThemeUI(next);
+}
+</script>
+</body>
+</html>
