@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/site.css">
 <style>
-.hero{padding:120px 0 50px;position:relative}
+.hero{padding:120px 0 60px;position:relative}
 .hero-grid{display:grid;grid-template-columns:1.08fr 0.92fr;gap:48px;align-items:center}
 @media(max-width:960px){.hero-grid{grid-template-columns:1fr;gap:40px;text-align:center}}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--radius-full);background:var(--color-primary-light);color:var(--color-primary);font-size:0.8rem;font-weight:700;margin-bottom:20px;border:1px solid var(--color-border)}
@@ -48,10 +48,16 @@
 .preview-progress-bar{height:6px;background:var(--color-border);border-radius:4px;overflow:hidden;margin-top:10px}
 .preview-progress-fill{height:100%;width:78%;background:var(--color-primary);border-radius:4px}
 .preview-timer-num{font-family:monospace;font-size:1.8rem;font-weight:800;color:var(--color-text);line-height:1}
+
+/* Hub Portal Pillars */
+.portal-tile{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:36px 30px;box-shadow:var(--shadow-sm);transition:all var(--transition);display:flex;flex-direction:column;justify-content:space-between}
+.portal-tile:hover{border-color:var(--color-primary);transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.tile-badge{display:inline-block;padding:4px 10px;border-radius:var(--radius-sm);font-size:0.75rem;font-weight:800;text-transform:uppercase;margin-bottom:16px;background:var(--color-surface-offset);color:var(--color-primary)}
 </style>
 </head>
 <body>
 
+<!-- ─── Header & Nav ─── -->
 <header class="nav" id="nav">
   <div class="container">
     <div class="nav-inner">
@@ -75,7 +81,8 @@
 
       <div class="nav-actions">
         <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
-        <a href="/app/index.html" class="btn btn-primary">Enter Study Hub</a>
+        <a href="/app/index.html#signin" class="btn btn-secondary btn-sm">Sign In</a>
+        <a href="/app/index.html#signup" class="btn btn-primary btn-sm">Sign Up Free</a>
       </div>
     </div>
   </div>
@@ -97,14 +104,14 @@
             <em>Study Smarter, Together.</em>
           </h1>
           <p>
-            The official academic study portal for Federal University of Technology, Minna. Practice real timed CBT exams, review step-by-step past questions, and track your Nigerian 5.0 CGPA — 100% free.
+            The dedicated academic study hub for Federal University of Technology, Minna. Practice real timed CBT exams, review step-by-step past questions, and track your Nigerian 5.0 CGPA.
           </p>
           <div class="hero-buttons">
-            <a href="/cbt-practice.html" class="btn btn-primary btn-lg">
-              Start CBT Practice Test
+            <a href="/app/index.html#signup" class="btn btn-primary btn-lg">
+              Sign Up to Practice CBT
               <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </a>
-            <a href="/courses.html" class="btn btn-secondary btn-lg">Browse Past Questions</a>
+            <a href="/courses.html" class="btn btn-secondary btn-lg">Explore Course Directory</a>
           </div>
           
           <div class="hero-stats-row">
@@ -114,7 +121,7 @@
             </div>
             <div class="hero-stat-item">
               <div class="hero-stat-val">Real CBT</div>
-              <div class="hero-stat-lbl">Exam Mode</div>
+              <div class="hero-stat-lbl">Mock Simulator</div>
             </div>
             <div class="hero-stat-item">
               <div class="hero-stat-val">5.0 Scale</div>
@@ -134,32 +141,32 @@
                   <div class="preview-userlevel">School of Engineering (SEET)</div>
                 </div>
               </div>
-              <div class="preview-status">Active • 1st Semester</div>
+              <div class="preview-status">Authenticated Member</div>
             </div>
 
             <div class="preview-grid">
               <div class="preview-box featured">
-                <div class="preview-box-tag">Upcoming CBT Mock</div>
+                <div class="preview-box-tag">Active CBT Mock Test</div>
                 <div class="preview-box-title">
                   <span>MTH 101 — Elementary Math I</span>
-                  <span style="font-size:0.85rem;color:var(--color-primary);font-weight:700">45 Questions</span>
+                  <span style="font-size:0.85rem;color:var(--color-primary);font-weight:700">20 Qs</span>
                 </div>
-                <div class="preview-box-desc">Differential Calculus, Quadratic Equations, Vectors & Trigonometry</div>
+                <div class="preview-box-desc">Calculus, Vectors & Quadratic Equations • Timed Mode</div>
                 <div class="preview-progress-bar">
                   <div class="preview-progress-fill"></div>
                 </div>
               </div>
 
               <div class="preview-box">
-                <div class="preview-box-tag">Study Focus Sprint</div>
+                <div class="preview-box-tag">Pomodoro Focus</div>
                 <div class="preview-timer-num">25:00</div>
-                <div class="preview-box-desc" style="margin-top:6px">Session 2 of 4 • Deep Focus Mode</div>
+                <div class="preview-box-desc" style="margin-top:6px">Session 2 of 4 • Deep Focus</div>
               </div>
 
               <div class="preview-box">
-                <div class="preview-box-tag">CGPA Target</div>
+                <div class="preview-box-tag">CGPA Standing</div>
                 <div class="preview-timer-num" style="color:var(--color-primary)">4.75</div>
-                <div class="preview-box-desc" style="margin-top:6px">First Class Standing • 5.0 Scale</div>
+                <div class="preview-box-desc" style="margin-top:6px">First Class Honours • 5.0 Scale</div>
               </div>
             </div>
           </div>
@@ -184,107 +191,60 @@
     </div>
   </section>
 
-  <!-- ─── Popular Courses Preview ─── -->
-  <section class="section" id="courses">
+  <!-- ─── Hub Portals Navigation (Directing users to separate pages) ─── -->
+  <section class="section" style="background:var(--color-surface)">
     <div class="container">
       <div class="section-header">
-        <span class="section-badge">Verified Question Bank</span>
-        <h2 class="section-title">Explore Courses by Level</h2>
-        <p class="section-desc">Carefully curated past questions and step-by-step solutions for 100L, 200L, and 300L students.</p>
-      </div>
-
-      <div class="grid-4">
-        
-        <a href="/courses.html" class="card" style="text-decoration:none;color:inherit">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">MTH 101</span>
-            <span style="font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">100L</span>
-          </div>
-          <h3 style="font-size:0.98rem;font-weight:700;margin-bottom:8px">Elementary Mathematics I</h3>
-          <p style="font-size:0.84rem;color:var(--color-text-muted);margin-bottom:14px;flex:1">Calculus, induction, algebra & vectors</p>
-          <div style="font-size:0.8rem;color:var(--color-primary);font-weight:700">Explore Course →</div>
-        </a>
-
-        <a href="/courses.html" class="card" style="text-decoration:none;color:inherit">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">PHY 101</span>
-            <span style="font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">100L</span>
-          </div>
-          <h3 style="font-size:0.98rem;font-weight:700;margin-bottom:8px">General Physics I (Mechanics)</h3>
-          <p style="font-size:0.84rem;color:var(--color-text-muted);margin-bottom:14px;flex:1">Motion, energy, momentum & fluids</p>
-          <div style="font-size:0.8rem;color:var(--color-primary);font-weight:700">Explore Course →</div>
-        </a>
-
-        <a href="/courses.html" class="card" style="text-decoration:none;color:inherit">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">CHM 101</span>
-            <span style="font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">100L</span>
-          </div>
-          <h3 style="font-size:0.98rem;font-weight:700;margin-bottom:8px">General Chemistry I</h3>
-          <p style="font-size:0.84rem;color:var(--color-text-muted);margin-bottom:14px;flex:1">Atomic structure & stoichiometry</p>
-          <div style="font-size:0.8rem;color:var(--color-primary);font-weight:700">Explore Course →</div>
-        </a>
-
-        <a href="/courses.html" class="card" style="text-decoration:none;color:inherit">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary)">MTH 201</span>
-            <span style="font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)">200L</span>
-          </div>
-          <h3 style="font-size:0.98rem;font-weight:700;margin-bottom:8px">Mathematical Methods I</h3>
-          <p style="font-size:0.84rem;color:var(--color-text-muted);margin-bottom:14px;flex:1">Differential equations & series</p>
-          <div style="font-size:0.8rem;color:var(--color-primary);font-weight:700">Explore Course →</div>
-        </a>
-
-      </div>
-
-      <div style="text-align:center;margin-top:36px">
-        <a href="/courses.html" class="btn btn-secondary">View All Courses & Past Questions →</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── Core Platform Features ─── -->
-  <section class="section" id="features">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Student-Centered Tools</span>
-        <h2 class="section-title">Everything Built for Academic Success</h2>
-        <p class="section-desc">Designed from the ground up for university students tackling rigorous tests and exams.</p>
+        <span class="section-badge">Dedicated Study Sections</span>
+        <h2 class="section-title">Explore the Academic Hub</h2>
+        <p class="section-desc">Each part of your academic preparation has its own dedicated space.</p>
       </div>
 
       <div class="grid-3">
         
-        <div class="card">
-          <div class="icon-box" style="margin-bottom:16px">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <!-- Pillar 1: Courses Page -->
+        <div class="portal-tile">
+          <div>
+            <span class="tile-badge">Level Directory</span>
+            <div class="icon-box" style="margin-bottom:18px">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><polyline points="10 8 10 12 14 12"/></svg>
+            </div>
+            <h3 style="font-size:1.3rem;font-weight:700;margin-bottom:10px">Courses & Past Questions</h3>
+            <p style="font-size:0.92rem;color:var(--color-text-muted);line-height:1.7;margin-bottom:24px">
+              Browse past question archives and comprehensive syllabi organized by 100L, 200L, and 300L across engineering, science, and computing faculties.
+            </p>
           </div>
-          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Timed CBT Mock Simulator</h3>
-          <p style="font-size:0.9rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
-            Experience real exam pressure. Features live countdown timers, question palette jump navigator, flag for review, and deep post-test score analysis.
-          </p>
-          <a href="/cbt-practice.html" style="font-size:0.85rem;color:var(--color-primary);font-weight:700;text-decoration:none">Learn about CBT Mode →</a>
+          <a href="/courses.html" class="btn btn-secondary" style="width:100%">Open Courses Directory →</a>
         </div>
 
-        <div class="card">
-          <div class="icon-box" style="margin-bottom:16px">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+        <!-- Pillar 2: CBT Simulator Page -->
+        <div class="portal-tile">
+          <div>
+            <span class="tile-badge" style="background:var(--color-primary-light);color:var(--color-primary)">Sign In Required</span>
+            <div class="icon-box" style="margin-bottom:18px">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3 style="font-size:1.3rem;font-weight:700;margin-bottom:10px">CBT Exam Simulator</h3>
+            <p style="font-size:0.92rem;color:var(--color-text-muted);line-height:1.7;margin-bottom:24px">
+              Simulate actual university computer-based tests with real countdown timers, question palette jumping, question flagging, and detailed post-test score analysis.
+            </p>
           </div>
-          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Nigerian 5.0 CGPA Calculator</h3>
-          <p style="font-size:0.9rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
-            Calculate semester GPA and cumulative CGPA according to exact FUT Minna grading scale (A=5, B=4, C=3, D=2, E=1, F=0) with target forecasting.
-          </p>
-          <a href="/cgpa-calculator.html" style="font-size:0.85rem;color:var(--color-primary);font-weight:700;text-decoration:none">Calculate Your CGPA →</a>
+          <a href="/cbt-practice.html" class="btn btn-secondary" style="width:100%">Learn About CBT Mode →</a>
         </div>
 
-        <div class="card">
-          <div class="icon-box" style="margin-bottom:16px">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/><path d="M16 2v4M8 2v4"/></svg>
+        <!-- Pillar 3: CGPA Calculator Page -->
+        <div class="portal-tile">
+          <div>
+            <span class="tile-badge">Interactive Tool</span>
+            <div class="icon-box" style="margin-bottom:18px">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+            </div>
+            <h3 style="font-size:1.3rem;font-weight:700;margin-bottom:10px">5.0 CGPA Calculator</h3>
+            <p style="font-size:0.92rem;color:var(--color-text-muted);line-height:1.7;margin-bottom:24px">
+              Live semester GPA and target planner based on exact FUT Minna 5.0 grading standards. Enter your credit units and grades to forecast your honors standing.
+            </p>
           </div>
-          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Pomodoro Study Focus Timer</h3>
-          <p style="font-size:0.9rem;color:var(--color-text-muted);line-height:1.6;margin-bottom:16px;flex:1">
-            Beat procrastination with integrated 25-minute focus sprints, customizable break intervals, daily progress tracking, and gentle chime alerts.
-          </p>
-          <a href="/app/index.html" style="font-size:0.85rem;color:var(--color-primary);font-weight:700;text-decoration:none">Open Study Tools →</a>
+          <a href="/cgpa-calculator.html" class="btn btn-secondary" style="width:100%">Open CGPA Calculator →</a>
         </div>
 
       </div>
@@ -348,42 +308,20 @@
     </div>
   </section>
 
-  <!-- ─── How it Works ─── -->
+  <!-- ─── Sign In / Sign Up CTA Banner ─── -->
   <section class="section">
     <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Simple 3-Step Process</span>
-        <h2 class="section-title">How to Use the Study Hub</h2>
-        <p class="section-desc">Get ready for test week in three seamless steps.</p>
-      </div>
-
-      <div class="grid-3">
-        <div class="card" style="text-align:center;align-items:center">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--color-primary);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:16px">1</div>
-          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Select Your Course</h3>
-          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6">Choose your course code (e.g. MTH 101, PHY 101) or browse by department and level to find relevant materials.</p>
-        </div>
-
-        <div class="card" style="text-align:center;align-items:center">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--color-primary);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:16px">2</div>
-          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Simulate Real CBT Tests</h3>
-          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6">Practice under timed conditions with real multiple choice questions. Flag challenging questions and jump around the palette.</p>
-        </div>
-
-        <div class="card" style="text-align:center;align-items:center">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--color-primary);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:16px">3</div>
-          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Review Solutions & Score High</h3>
-          <p style="font-size:0.88rem;color:var(--color-text-muted);line-height:1.6">Analyze weak topics with step-by-step verified explanations, plan your 5.0 CGPA, and walk into exam halls confident.</p>
+      <div style="background:linear-gradient(135deg,var(--color-surface),var(--color-surface-offset));border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:50px 36px;text-align:center;box-shadow:var(--shadow-lg)">
+        <span class="hero-badge" style="margin-bottom:12px">Free Student Membership</span>
+        <h2 style="font-family:var(--font-serif);font-size:clamp(2rem,3.5vw,2.8rem);margin-bottom:12px">Ready to Take Your First CBT Practice Test?</h2>
+        <p style="font-size:1.05rem;color:var(--color-text-muted);max-width:560px;margin:0 auto 28px">
+          Create your free student account or sign in to launch timed mock exams, record test scores, and track your performance history.
+        </p>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+          <a href="/app/index.html#signup" class="btn btn-primary btn-lg">Create Free Account</a>
+          <a href="/app/index.html#signin" class="btn btn-secondary btn-lg">Sign In to Account</a>
         </div>
       </div>
-
-      <!-- CTA Banner -->
-      <div style="background:linear-gradient(135deg,var(--color-surface),var(--color-surface-offset));border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:50px 36px;text-align:center;box-shadow:var(--shadow-lg);margin-top:60px">
-        <h2 style="font-family:var(--font-serif);font-size:clamp(2rem,3.5vw,2.8rem);margin-bottom:12px">Ready to Elevate Your Academic Standing?</h2>
-        <p style="font-size:1.05rem;color:var(--color-text-muted);max-width:540px;margin:0 auto 28px">Join thousands of students studying with verified FUT Minna questions and CBT simulations today.</p>
-        <a href="/app/index.html" class="btn btn-primary btn-lg">Launch Study Hub App Now</a>
-      </div>
-
     </div>
   </section>
 </main>
@@ -396,7 +334,8 @@
       <a href="/cbt-practice.html" class="footer-link">CBT Simulator</a>
       <a href="/cgpa-calculator.html" class="footer-link">CGPA Calculator</a>
       <a href="/about.html" class="footer-link">About NIFES</a>
-      <a href="/app/index.html" class="footer-link">Study Hub App</a>
+      <a href="/app/index.html#signin" class="footer-link">Sign In</a>
+      <a href="/app/index.html#signup" class="footer-link">Sign Up</a>
     </div>
     <p>© 2026 NIFES Study Hub — Federal University of Technology, Minna (FUT Minna)</p>
     <p style="margin-top:8px;font-size:0.8rem;color:var(--color-text-faint)">

@@ -120,18 +120,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   currentUser = await dbGetCurrentUser();
 
-  // Check guest mode fallback for offline study
-  var isGuest = localStorage.getItem('nifes_guest_mode') === 'true';
-  if (!currentUser && isGuest) {
-    currentUser = {
-      id: 'guest-local',
-      email: 'guest@student.local',
-      user_metadata: { full_name: 'Guest Scholar' }
-    };
-  }
-
   updateAuthUI();
   initTheme();
+
+  if (window.location.hash === '#signup') {
+    switchAuthTab('signup');
+  } else if (window.location.hash === '#signin') {
+    switchAuthTab('signin');
+  }
 
   if (currentUser) {
     hideAuthPage();
@@ -1217,6 +1213,11 @@ function onQuizLevelChange() {
 }
 
 function startQuiz() {
+  if (!currentUser) {
+    showAuthPage();
+    showToast('warning', 'Please sign in or create an account to start your CBT practice test.');
+    return;
+  }
   var level = document.getElementById('quizLevel').value;
   var course = document.getElementById('quizCourse').value;
   var qCount = document.querySelector('input[name="quizCount"]:checked')?.value || '10';
@@ -1707,18 +1708,6 @@ function retryMissed() {
 
 function newTest() {
   initPracticeView();
-}
-
-function continueAsGuest() {
-  localStorage.setItem('nifes_guest_mode', 'true');
-  currentUser = {
-    id: 'guest-' + Date.now(),
-    email: 'guest@student.local',
-    user_metadata: { full_name: 'Guest Scholar' }
-  };
-  currentUserRole = 'user';
-  hideAuthPage();
-  showToast('success', 'Welcome to NIFES Study Hub! (Offline / Guest Mode)');
 }
 
 function installPWA() {
