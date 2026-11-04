@@ -11,12 +11,22 @@ create table if not exists profiles (
 
 alter table profiles enable row level security;
 
--- Auto-create profile on signup
+-- Auto-create profile on signup (supports email signup and Google OAuth)
 create or replace function handle_new_user()
 returns trigger as $$
 begin
   insert into public.profiles (id, full_name, role)
-  values (new.id, new.raw_user_meta_data->>'full_name', 'user');
+  values (
+    new.id,
+    coalesce(
+      new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'name',
+      split_part(new.email, '@', 1),
+      'Scholar'
+    ),
+    'user'
+  )
+  on conflict (id) do nothing;
   return new;
 end;
 $$ language plpgsql security definer;
@@ -28,9 +38,13 @@ create trigger on_auth_user_created
 
 -- Backfill profiles for existing users who signed up before this migration
 insert into profiles (id, full_name, role)
-select id, raw_user_meta_data->>'full_name', 'user'
+select
+  id,
+  coalesce(raw_user_meta_data->>'full_name', raw_user_meta_data->>'name', split_part(email, '@', 1), 'Scholar'),
+  'user'
 from auth.users
-where id not in (select id from profiles);
+where id not in (select id from profiles)
+on conflict (id) do nothing;
 
 -- 2. Bookmark questions
 create table if not exists bookmarks (
@@ -71,6 +85,11 @@ drop policy if exists profiles_self_read on profiles;
 create policy "profiles_self_read"
   on profiles for select
   using (auth.uid() = id or public.is_admin_or_superuser(auth.uid()));
+
+drop policy if exists profiles_self_insert on profiles;
+create policy "profiles_self_insert"
+  on profiles for insert
+  with check (auth.uid() = id);
 
 drop policy if exists profiles_self_update on profiles;
 create policy "profiles_self_update"

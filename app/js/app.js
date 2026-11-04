@@ -116,9 +116,54 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Security & state hygiene: purge any legacy guest mode flag from previous versions
   localStorage.removeItem('nifes_guest_mode');
 
+  // Detect if browser is returning from OAuth callback
+  var hasOAuthPayload = (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('refresh_token'))) ||
+                        (window.location.search && window.location.search.includes('code='));
+
+  if (hasOAuthPayload) {
+    showPageLoading();
+  }
+
+  // Handle OAuth callback errors in URL hash or search params (e.g. Google auth canceled or rejected)
+  var authErrSource = (window.location.hash && window.location.hash.includes('error_description'))
+    ? window.location.hash.replace('#', '?')
+    : (window.location.search && window.location.search.includes('error_description'))
+      ? window.location.search
+      : null;
+
+  if (authErrSource) {
+    try {
+      var hashParams = new URLSearchParams(authErrSource);
+      var errMsg = hashParams.get('error_description') || 'Google authentication was not completed.';
+      var cleanErr = decodeURIComponent(errMsg).replace(/\+/g, ' ');
+      var errBox = document.getElementById('authError');
+      if (errBox) {
+        errBox.textContent = cleanErr;
+        errBox.classList.add('show');
+      }
+      history.replaceState(null, null, window.location.pathname);
+    } catch (e) {}
+  }
+
+  var authResolved = false;
+
   dbOnAuthChange(function(event, session) {
     currentUser = session?.user || null;
     updateAuthUI();
+    if (currentUser) {
+      authResolved = true;
+      hideAuthPage();
+      // Clean up OAuth hash & search tokens from browser address bar
+      if (window.location.hash || window.location.search) {
+        try {
+          history.replaceState(null, null, window.location.pathname);
+        } catch (e) {}
+      }
+    } else {
+      if (!hasOAuthPayload) {
+        showAuthPage();
+      }
+    }
   });
 
   currentUser = await dbGetCurrentUser();
@@ -133,9 +178,23 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   if (currentUser) {
+    authResolved = true;
     hideAuthPage();
-  } else {
+  } else if (!hasOAuthPayload) {
     showAuthPage();
+  } else {
+    // Safety fallback: if OAuth payload was present but no user is found after 5s
+    setTimeout(function() {
+      if (!authResolved && !currentUser) {
+        hidePageLoading();
+        showAuthPage();
+        var errEl = document.getElementById('authError');
+        if (errEl) {
+          errEl.textContent = 'Google authentication timed out. Please try signing in again.';
+          errEl.classList.add('show');
+        }
+      }
+    }, 5000);
   }
 });
 
@@ -368,6 +427,7 @@ async function handleSignIn(e) {
   var email = (document.getElementById('signInEmail').value || '').trim();
   var password = (document.getElementById('signInPassword').value || '').trim();
   var errorEl = document.getElementById('authError');
+  var submitBtn = document.querySelector('#signInForm button[type="submit"]');
   hideAuthMessages();
 
   if (!email) {
@@ -386,57 +446,167 @@ async function handleSignIn(e) {
     return;
   }
 
-  var res = await dbSignIn(email, password);
-  if (res.success) {
-    if (!res.data.user?.email_confirmed_at) {
-      errorEl.textContent = 'Email not yet confirmed. Check your inbox (and spam) for the confirmation link.';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Signing in…';
+  }
+
+  try {
+    var res = await dbSignIn(email, password);
+    if (res.success) {
+      // If user has no active session and email confirmation is strictly required
+      if (!res.data.session && !res.data.user?.email_confirmed_at) {
+        errorEl.textContent = 'Email not yet confirmed. Please check your inbox (and spam) for the confirmation link.';
+        errorEl.classList.add('show');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Sign In';
+        }
+        return;
+      }
+      currentUser = res.data.user;
+      updateAuthUI();
+      hideAuthPage();
+      document.getElementById('signInForm').reset();
+      var scholarName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'Scholar';
+      showToast('success', 'Welcome back, ' + scholarName + '!');
+    } else {
+      var msg = res.error || 'Sign in failed.';
+      var lower = msg.toLowerCase();
+      if (lower.includes('email not confirmed')) {
+        msg = 'Email not yet confirmed. Please check your inbox (and spam) for the confirmation link.';
+      } else if (lower.includes('invalid login credentials') || lower.includes('invalid grant')) {
+        msg = 'Incorrect email or password. Please verify your details.';
+      }
+      errorEl.textContent = msg;
       errorEl.classList.add('show');
-      return;
     }
-    currentUser = res.data.user;
-    updateAuthUI();
-    hideAuthPage();
-    document.getElementById('signInForm').reset();
-  } else {
-    var msg = res.error || 'Sign in failed.';
-    if (msg.toLowerCase().includes('email not confirmed')) {
-      msg = 'Email not confirmed. Check your inbox (and spam) for the confirmation link.';
-    }
-    errorEl.textContent = msg;
+  } catch (err) {
+    errorEl.textContent = err.message || 'An error occurred while signing in.';
     errorEl.classList.add('show');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign In';
+    }
   }
 }
 
 async function handleSignUp(e) {
   e.preventDefault();
-  var name = document.getElementById('signUpName').value;
-  var email = document.getElementById('signUpEmail').value;
-  var password = document.getElementById('signUpPassword').value;
-  var confirm = document.getElementById('signUpConfirm').value;
+  var name = (document.getElementById('signUpName').value || '').trim();
+  var email = (document.getElementById('signUpEmail').value || '').trim();
+  var password = (document.getElementById('signUpPassword').value || '').trim();
+  var confirm = (document.getElementById('signUpConfirm').value || '').trim();
   var errorEl = document.getElementById('authError');
   var successEl = document.getElementById('authSuccess');
+  var submitBtn = document.querySelector('#signUpForm button[type="submit"]');
 
   hideAuthMessages();
-  if (password !== confirm) { errorEl.textContent = 'Passwords do not match.'; errorEl.classList.add('show'); return; }
-  if (password.length < 8) { errorEl.textContent = 'Password must be at least 8 characters.'; errorEl.classList.add('show'); return; }
 
-  var res = await dbSignUp(email, password, name);
-  if (res.success) {
-    document.getElementById('signUpForm').reset();
-    switchAuthTab('signin');
-    var msg = res.data?.user?.identities?.length === 0
-      ? 'This email is already registered. Try signing in.'
-      : 'Account created! Check your email to confirm (check spam too). After confirming, sign in below.';
-    successEl.textContent = msg;
-    successEl.classList.add('show');
-  } else {
-    errorEl.textContent = res.error || 'Sign up failed.';
+  if (!name) {
+    errorEl.textContent = 'Please enter your full name.';
     errorEl.classList.add('show');
+    return;
+  }
+  if (!email) {
+    errorEl.textContent = 'Please enter your university or personal email.';
+    errorEl.classList.add('show');
+    return;
+  }
+  if (password.length < 8) {
+    errorEl.textContent = 'Password must be at least 8 characters long.';
+    errorEl.classList.add('show');
+    return;
+  }
+  if (password !== confirm) {
+    errorEl.textContent = 'Passwords do not match. Please re-enter.';
+    errorEl.classList.add('show');
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account…';
+  }
+
+  try {
+    var res = await dbSignUp(email, password, name);
+    if (res.success) {
+      document.getElementById('signUpForm').reset();
+
+      // Case 1: Supabase project auto-confirms users -> Active session returned
+      if (res.data?.session && res.data?.user) {
+        currentUser = res.data.user;
+        updateAuthUI();
+        hideAuthPage();
+        showToast('success', 'Account created! Welcome to NIFES Study Hub, ' + name + '!');
+        return;
+      }
+
+      // Case 2: Email already exists in the system
+      if (res.data?.user?.identities?.length === 0) {
+        switchAuthTab('signin');
+        successEl.textContent = 'This email is already registered. Please sign in below.';
+        successEl.classList.add('show');
+        return;
+      }
+
+      // Case 3: Confirmation link was dispatched
+      switchAuthTab('signin');
+      successEl.textContent = 'Account created successfully! Check your email inbox (and spam) for the confirmation link, then sign in below.';
+      successEl.classList.add('show');
+    } else {
+      var msg = res.error || 'Sign up failed.';
+      if (msg.toLowerCase().includes('already registered')) {
+        msg = 'This email is already registered. Please sign in instead.';
+      }
+      errorEl.textContent = msg;
+      errorEl.classList.add('show');
+    }
+  } catch (err) {
+    errorEl.textContent = err.message || 'An error occurred during registration.';
+    errorEl.classList.add('show');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign Up';
+    }
   }
 }
 
 async function handleGoogleSignIn() {
-  await dbSignInWithGoogle();
+  var errorEl = document.getElementById('authError');
+  var googleBtn = document.querySelector('.btn-google');
+  hideAuthMessages();
+
+  if (googleBtn) {
+    googleBtn.disabled = true;
+    googleBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;vertical-align:middle"></span> Connecting to Google…';
+  }
+
+  try {
+    var res = await dbSignInWithGoogle();
+    if (res && !res.success) {
+      if (errorEl) {
+        errorEl.textContent = res.error || 'Google Sign-In failed. Please try email sign in.';
+        errorEl.classList.add('show');
+      }
+      if (googleBtn) {
+        googleBtn.disabled = false;
+        googleBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Continue with Google';
+      }
+    }
+  } catch (err) {
+    if (errorEl) {
+      errorEl.textContent = err.message || 'Google Sign-In failed.';
+      errorEl.classList.add('show');
+    }
+    if (googleBtn) {
+      googleBtn.disabled = false;
+      googleBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Continue with Google';
+    }
+  }
 }
 
 /* ─── Admin View ──────────────────────────────────── */

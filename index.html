@@ -392,6 +392,13 @@ svg { max-width: 100%; display: inline-block; vertical-align: middle; }
 </footer>
 
 <script>
+// Forward OAuth callbacks to the app view if received on landing page
+var hasAuthHash = window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error_description') || window.location.hash.includes('refresh_token'));
+var hasAuthQuery = window.location.search && (window.location.search.includes('code=') || window.location.search.includes('error='));
+if (hasAuthHash || hasAuthQuery) {
+  window.location.replace('app/index.html' + window.location.search + window.location.hash);
+}
+
 // Theme management
 (function() {
   var saved = localStorage.getItem('nifes_theme') || 'light';

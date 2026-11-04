@@ -127,13 +127,29 @@ async function dbSignIn(email, password) {
 
 async function dbSignInWithGoogle() {
   try {
-    if (!supabaseClient) return;
-    await supabaseClient.auth.signInWithOAuth({
+    if (!supabaseClient) return { success: false, error: 'Supabase authentication is not configured.' };
+    
+    // Explicitly redirect to /app/index.html after Google authentication
+    var redirectTo = window.location.href.split('#')[0].split('?')[0];
+    if (!redirectTo || redirectTo === 'null' || redirectTo.startsWith('file:')) {
+      redirectTo = window.location.origin ? window.location.origin + '/app/index.html' : 'http://localhost:3000/app/index.html';
+    }
+    
+    var res = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: {
+        redirectTo: redirectTo,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account'
+        }
+      }
     });
+    if (res.error) throw res.error;
+    return { success: true, data: res.data };
   } catch (err) {
     console.error('Google sign in error:', err);
+    return { success: false, error: err.message || 'Failed to initialize Google Sign-In.' };
   }
 }
 
@@ -193,7 +209,8 @@ async function dbGetProfile(userId) {
     if (!result.data) {
       // Auto-create profile if missing (e.g. user signed up before migration)
       var user = await supabaseClient.auth.getUser();
-      var fullName = user?.data?.user?.user_metadata?.full_name || '';
+      var meta = user?.data?.user?.user_metadata;
+      var fullName = meta?.full_name || meta?.name || user?.data?.user?.email?.split('@')[0] || 'Scholar';
       var insertRes = await supabaseClient.from('profiles').insert({
         id: userId, full_name: fullName, role: 'user'
       }).select().maybeSingle();
