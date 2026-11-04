@@ -3,283 +3,568 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NIFES Study Hub — Past Questions & Learning Platform</title>
+<title>NIFES Study Hub — FUT Minna Past Questions & CBT Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0f533a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="NIFES Hub">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300..700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0d5c3a">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --font-body:"DM Sans",system-ui,-apple-system,sans-serif;
-  --font-display:"Instrument Serif",Georgia,serif;
-  --color-bg:#0a130e;
-  --color-surface:#101c15;
-  --color-surface-offset:#172920;
-  --color-border:#243e30;
-  --color-divider:#1a3126;
-  --color-text:#e9f2ec;
-  --color-text-muted:#8ea699;
-  --color-text-faint:#5f786b;
-  --color-primary:#10b981;
-  --color-primary-hover:#34d399;
-  --color-primary-deep:#0d5c3a;
-  --color-accent:#f59e0b;
-  --color-accent-hover:#fbbf24;
-  --color-gold:#fbbf24;
+  --font-sans:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-serif:"Instrument Serif",Georgia,serif;
+  --color-bg:#f8faf9;
+  --color-surface:#ffffff;
+  --color-surface-offset:#f0f4f2;
+  --color-border:#e2e8e5;
+  --color-divider:#edf2ef;
+  --color-text:#0f1713;
+  --color-text-muted:#52635a;
+  --color-text-faint:#87968e;
+  --color-primary:#0d5c3a;
+  --color-primary-hover:#09462b;
+  --color-primary-light:#e8f4ee;
+  --color-accent:#d97706;
+  --color-accent-light:#fef3c7;
+  --color-success:#10b981;
   --radius-sm:6px;
   --radius-md:10px;
   --radius-lg:16px;
-  --radius-full:999px;
-  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;
-  --space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;
-  --space-12:48px;--space-16:64px;--space-20:80px;
-  --transition:180ms cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow-card:0 4px 20px rgba(0,0,0,0.35);
+  --radius-xl:24px;
+  --radius-full:9999px;
+  --shadow-sm:0 1px 2px rgba(15,23,19,0.04);
+  --shadow-md:0 4px 12px rgba(15,23,19,0.06), 0 1px 3px rgba(15,23,19,0.04);
+  --shadow-lg:0 12px 30px rgba(15,23,19,0.08), 0 4px 8px rgba(15,23,19,0.04);
+  --transition:160ms cubic-bezier(0.16,1,0.3,1);
 }
-[data-theme=light]{
-  --color-bg:#f8f7f2;
-  --color-surface:#ffffff;
-  --color-surface-offset:#f1efe7;
-  --color-border:#d1cbba;
-  --color-divider:#e4dfd3;
-  --color-text:#131e17;
-  --color-text-muted:#506157;
-  --color-text-faint:#86978d;
-  --color-primary:#0d5c3a;
-  --color-primary-hover:#09462b;
-  --color-primary-deep:#063420;
-  --color-accent:#c27803;
-  --color-accent-hover:#9e6002;
-  --color-gold:#d97706;
-  --shadow-card:0 4px 20px rgba(19,30,23,0.06);
+[data-theme="dark"]{
+  --color-bg:#0a120e;
+  --color-surface:#101a14;
+  --color-surface-offset:#16241c;
+  --color-border:#213429;
+  --color-divider:#1a2a21;
+  --color-text:#eaf2ed;
+  --color-text-muted:#8ba094;
+  --color-text-faint:#5c7064;
+  --color-primary:#10b981;
+  --color-primary-hover:#34d399;
+  --color-primary-light:#13291e;
+  --color-accent:#f59e0b;
+  --color-accent-light:#322409;
+  --color-success:#10b981;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md:0 4px 14px rgba(0,0,0,0.4);
+  --shadow-lg:0 12px 32px rgba(0,0,0,0.5);
 }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);line-height:1.6;-webkit-font-smoothing:antialiased}
-.container{max-width:1120px;margin:0 auto;padding:0 var(--space-6)}
+body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-text);line-height:1.6;-webkit-font-smoothing:antialiased}
+.container{max-width:1160px;margin:0 auto;padding:0 24px}
 
-/* ─── Hero (Clean Architectural & Human) ─── */
-.hero{min-height:92vh;display:flex;flex-direction:column;justify-content:center;position:relative;padding:calc(var(--space-20) + 40px) 0 var(--space-16);overflow:hidden;border-bottom:1px solid var(--color-border)}
-.hero-badge{display:inline-flex;align-items:center;gap:var(--space-2);padding:6px 14px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-full);font-size:0.75rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-accent);margin-bottom:var(--space-6);width:fit-content}
+/* ─── Navigation ─── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--color-surface);border-bottom:1px solid var(--color-border);transition:all var(--transition)}
+.nav.scrolled{box-shadow:var(--shadow-sm)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:68px}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--color-text)}
+.nav-logo-icon{width:36px;height:36px;border-radius:10px;background:var(--color-primary);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.nav-logo-text{font-size:1.15rem;font-weight:700;letter-spacing:-0.02em}
+.nav-logo-text span{color:var(--color-primary);font-weight:800}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-link{font-size:0.9rem;font-weight:600;color:var(--color-text-muted);text-decoration:none;transition:color var(--transition)}
+.nav-link:hover{color:var(--color-primary)}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.theme-btn{width:38px;height:38px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface-offset);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--color-text);transition:all var(--transition)}
+.theme-btn:hover{border-color:var(--color-primary)}
+
+/* ─── Buttons ─── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;font-size:0.92rem;font-weight:700;border-radius:var(--radius-md);text-decoration:none;cursor:pointer;transition:all var(--transition);border:none}
+.btn-primary{background:var(--color-primary);color:#ffffff}
+[data-theme="dark"] .btn-primary{color:#0a120e}
+.btn-primary:hover{background:var(--color-primary-hover);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.btn-secondary{background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border)}
+.btn-secondary:hover{background:var(--color-surface-offset);border-color:var(--color-primary)}
+.btn-lg{padding:14px 28px;font-size:1rem;border-radius:var(--radius-lg)}
+
+/* ─── Hero Section ─── */
+.hero{padding:130px 0 60px;position:relative}
+.hero-grid{display:grid;grid-template-columns:1.08fr 0.92fr;gap:48px;align-items:center}
+@media(max-width:960px){.hero-grid{grid-template-columns:1fr;gap:40px;text-align:center}}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--radius-full);background:var(--color-primary-light);color:var(--color-primary);font-size:0.8rem;font-weight:700;margin-bottom:20px;border:1px solid var(--color-border)}
 .hero-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--color-primary)}
-.hero h1{font-family:var(--font-display);font-size:clamp(2.8rem,6.5vw,5.2rem);line-height:1.06;letter-spacing:-.02em;margin-bottom:var(--space-6);max-width:16ch;color:var(--color-text)}
-.hero h1 span{display:block;color:var(--color-primary);font-style:italic}
-.hero p{font-size:clamp(1.05rem,1.4vw,1.2rem);color:var(--color-text-muted);max-width:58ch;margin-bottom:var(--space-8);line-height:1.75}
-.hero-actions{display:flex;gap:var(--space-4);flex-wrap:wrap}
+.hero h1{font-family:var(--font-serif);font-size:clamp(2.7rem,5vw,4.2rem);line-height:1.08;letter-spacing:-0.02em;margin-bottom:20px;color:var(--color-text)}
+.hero h1 em{font-style:italic;color:var(--color-primary)}
+.hero p{font-size:1.1rem;color:var(--color-text-muted);line-height:1.7;margin-bottom:32px;max-width:540px}
+@media(max-width:960px){.hero p{margin-left:auto;margin-right:auto}}
+.hero-buttons{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:40px}
+@media(max-width:960px){.hero-buttons{justify-content:center}}
 
-.btn-primary{display:inline-flex;align-items:center;gap:var(--space-2);padding:14px 28px;background:var(--color-primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:0.95rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all var(--transition);box-shadow:0 2px 10px rgba(0,0,0,0.15)}
-[data-theme=dark] .btn-primary{color:#0a130e}
-.btn-primary:hover{background:var(--color-primary-hover);transform:translateY(-1px);box-shadow:0 4px 16px rgba(16,185,129,0.25)}
-.btn-primary svg{transition:transform var(--transition)}
-.btn-primary:hover svg{transform:translateX(3px)}
+.hero-stats-row{display:flex;gap:36px;padding-top:28px;border-top:1px solid var(--color-divider);flex-wrap:wrap}
+@media(max-width:960px){.hero-stats-row{justify-content:center}}
+.hero-stat-item{text-align:left}
+.hero-stat-val{font-size:1.6rem;font-weight:800;color:var(--color-text);line-height:1}
+.hero-stat-lbl{font-size:0.78rem;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-top:6px}
 
-.btn-ghost{display:inline-flex;align-items:center;gap:var(--space-2);padding:14px 28px;background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:0.95rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all var(--transition)}
-.btn-ghost:hover{background:var(--color-surface-offset);border-color:var(--color-primary);color:var(--color-primary)}
+/* ─── Hero Bento Preview Card (Modern Student Dashboard) ─── */
+.preview-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:24px;box-shadow:var(--shadow-lg);position:relative}
+.preview-topbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--color-divider)}
+.preview-user{display:flex;align-items:center;gap:10px}
+.preview-avatar{width:36px;height:36px;border-radius:50%;background:var(--color-primary-light);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem}
+.preview-username{font-size:0.88rem;font-weight:700}
+.preview-userlevel{font-size:0.75rem;color:var(--color-text-muted)}
+.preview-status{font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:var(--radius-full);background:var(--color-primary-light);color:var(--color-primary)}
 
-.hero-stats{display:flex;gap:var(--space-8);margin-top:var(--space-12);padding-top:var(--space-8);border-top:1px solid var(--color-divider);flex-wrap:wrap}
-.hero-stat{text-align:left}
-.hero-stat-number{font-family:var(--font-display);font-size:clamp(2rem,3vw,2.5rem);font-weight:400;color:var(--color-text);line-height:1}
-.hero-stat-label{font-size:.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-text-muted);margin-top:var(--space-2);font-weight:600}
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:480px){.preview-grid{grid-template-columns:1fr}}
 
-/* ─── Nav ─── */
-.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:var(--space-4) 0;background:var(--color-surface);border-bottom:1px solid var(--color-border);transition:border-color var(--transition)}
-.nav.scrolled{box-shadow:0 2px 12px rgba(0,0,0,0.1)}
-.nav .container{display:flex;align-items:center;justify-content:space-between}
-.nav-logo{display:flex;align-items:center;gap:var(--space-3);font-family:var(--font-display);font-size:1.4rem;color:var(--color-text);text-decoration:none;font-weight:400}
-.nav-logo span{color:var(--color-primary);font-style:italic}
-.nav-links{display:flex;gap:var(--space-6);align-items:center}
-.nav-links a{font-size:.88rem;font-weight:600;color:var(--color-text-muted);text-decoration:none;transition:color var(--transition)}
-.nav-links a:hover{color:var(--color-primary)}
-.theme-toggle{background:var(--color-surface-offset);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:6px 12px;cursor:pointer;color:var(--color-text);font-size:0.9rem;transition:all var(--transition)}
-.theme-toggle:hover{border-color:var(--color-primary)}
-@media(max-width:640px){.nav-links a{display:none}}
+.preview-box{background:var(--color-surface-offset);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px}
+.preview-box.featured{grid-column:1 / -1;background:linear-gradient(135deg,var(--color-surface-offset),var(--color-surface))}
+.preview-box-tag{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-accent);margin-bottom:8px}
+.preview-box-title{font-size:1rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.preview-box-desc{font-size:0.8rem;color:var(--color-text-muted);line-height:1.5}
+.preview-progress-bar{height:6px;background:var(--color-border);border-radius:4px;overflow:hidden;margin-top:10px}
+.preview-progress-fill{height:100%;width:78%;background:var(--color-primary);border-radius:4px}
+.preview-timer-num{font-family:monospace;font-size:1.8rem;font-weight:800;color:var(--color-text);line-height:1}
 
-/* ─── Section ─── */
-.section{padding:var(--space-16) 0;border-bottom:1px solid var(--color-border)}
-.section-header{text-align:left;margin-bottom:var(--space-12);max-width:640px}
-.section-label{display:inline-block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--color-accent);margin-bottom:var(--space-2)}
-.section-title{font-family:var(--font-display);font-size:clamp(2rem,3.8vw,3rem);margin-bottom:var(--space-3);line-height:1.12}
-.section-desc{font-size:1.05rem;color:var(--color-text-muted);line-height:1.7}
+/* ─── Section Shared ─── */
+.section{padding:80px 0;border-top:1px solid var(--color-border)}
+.section-header{text-align:center;max-width:640px;margin:0 auto 50px}
+.section-badge{display:inline-block;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent);margin-bottom:10px}
+.section-title{font-family:var(--font-serif);font-size:clamp(2rem,3.4vw,2.8rem);margin-bottom:14px;line-height:1.15}
+.section-desc{font-size:1.02rem;color:var(--color-text-muted);line-height:1.65}
 
-/* ─── History Dossier ─── */
-.history-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-10);align-items:center}
-@media(max-width:768px){.history-grid{grid-template-columns:1fr;gap:var(--space-6)}}
-.history-content h2{font-family:var(--font-display);font-size:clamp(1.7rem,3vw,2.4rem);margin-bottom:var(--space-4);line-height:1.15}
-.history-content p{color:var(--color-text-muted);margin-bottom:var(--space-4);font-size:.95rem;line-height:1.8}
-.history-image{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-10);text-align:left;box-shadow:var(--shadow-card);position:relative}
-.history-image-badge{display:inline-block;padding:3px 10px;background:var(--color-surface-offset);border:1px solid var(--color-border);border-radius:var(--radius-sm);font-size:0.75rem;font-weight:700;color:var(--color-accent);margin-bottom:var(--space-4)}
-.history-image h3{font-family:var(--font-display);font-size:1.5rem;margin-bottom:var(--space-2)}
-.history-image p{font-size:.9rem;color:var(--color-text-muted);line-height:1.7}
+/* ─── Courses & Level Explorer ─── */
+.courses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+.course-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:22px;transition:all var(--transition);text-decoration:none;color:inherit;display:flex;flex-direction:column}
+.course-card:hover{border-color:var(--color-primary);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.course-code-wrap{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.course-code{font-size:1.05rem;font-weight:800;color:var(--color-primary)}
+.course-level{font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:var(--radius-sm);background:var(--color-surface-offset);color:var(--color-text-muted)}
+.course-name{font-size:0.95rem;font-weight:700;margin-bottom:8px;line-height:1.4}
+.course-meta{font-size:0.8rem;color:var(--color-text-muted);margin-top:auto;padding-top:14px;border-top:1px solid var(--color-divider);display:flex;justify-content:space-between}
 
-/* ─── Features (Tactile Dossier Grid) ─── */
-.features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:var(--space-6)}
-.feature-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6);transition:all var(--transition);box-shadow:var(--shadow-card);display:flex;flex-direction:column}
-.feature-card:hover{border-color:var(--color-primary);transform:translateY(-2px)}
-.feature-icon-wrap{width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-surface-offset);border:1px solid var(--color-border);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-4);color:var(--color-primary)}
-.feature-card h3{font-size:1.1rem;font-weight:700;margin-bottom:var(--space-2);color:var(--color-text)}
-.feature-card p{font-size:.9rem;color:var(--color-text-muted);line-height:1.65;flex:1}
+/* ─── Features (Proportional & Clean Icons) ─── */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px}
+.feature-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:26px;box-shadow:var(--shadow-sm);transition:all var(--transition)}
+.feature-card:hover{border-color:var(--color-primary);box-shadow:var(--shadow-md)}
+.feature-icon-box{width:42px;height:42px;border-radius:10px;background:var(--color-primary-light);color:var(--color-primary);display:flex;align-items:center;justify-content:center;margin-bottom:18px;border:1px solid var(--color-border)}
+.feature-icon-box svg{width:20px;height:20px;flex-shrink:0}
+.feature-card h3{font-size:1.08rem;font-weight:700;margin-bottom:8px;color:var(--color-text)}
+.feature-card p{font-size:0.9rem;color:var(--color-text-muted);line-height:1.65}
 
-/* ─── CTA ─── */
-.cta{text-align:center;padding:var(--space-20) 0;background:var(--color-surface-offset);border-bottom:1px solid var(--color-border)}
-.cta h2{font-family:var(--font-display);font-size:clamp(2.2rem,4vw,3.2rem);margin-bottom:var(--space-3)}
-.cta p{color:var(--color-text-muted);max-width:50ch;margin:0 auto var(--space-8);font-size:1.05rem}
-.cta .hero-actions{justify-content:center}
+/* ─── How it Works ─── */
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+@media(max-width:768px){.steps-grid{grid-template-columns:1fr}}
+.step-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:28px;text-align:center}
+.step-num{width:36px;height:36px;border-radius:50%;background:var(--color-primary);color:#fff;font-weight:800;font-size:0.9rem;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+[data-theme="dark"] .step-num{color:#0a120e}
+.step-card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.step-card p{font-size:0.88rem;color:var(--color-text-muted);line-height:1.6}
+
+/* ─── CTA Banner ─── */
+.cta-banner{background:linear-gradient(135deg,var(--color-surface),var(--color-surface-offset));border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:50px 36px;text-align:center;box-shadow:var(--shadow-lg);margin:60px 0}
+.cta-banner h2{font-family:var(--font-serif);font-size:clamp(2rem,3.5vw,2.8rem);margin-bottom:12px}
+.cta-banner p{font-size:1.05rem;color:var(--color-text-muted);max-width:540px;margin:0 auto 28px}
 
 /* ─── Footer ─── */
-.footer{padding:var(--space-10) 0;background:var(--color-surface);text-align:center}
-.footer p{font-size:.85rem;color:var(--color-text-muted)}
+.footer{padding:40px 0;border-top:1px solid var(--color-border);background:var(--color-surface);text-align:center;font-size:0.88rem;color:var(--color-text-muted)}
 .footer a{color:var(--color-primary);text-decoration:none;font-weight:600}
+
+@media(max-width:640px){
+  .nav-links{display:none}
+  .hero{padding:100px 0 40px}
+}
 </style>
 </head>
 <body>
 
-<nav class="nav" id="nav">
+<!-- ─── Header & Nav ─── -->
+<header class="nav" id="nav">
   <div class="container">
-    <a href="#" class="nav-logo" style="display:flex;align-items:center;gap:var(--space-2);font-family:var(--font-display);font-size:1.3rem;color:var(--color-text);text-decoration:none">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-label="NIFES Study Hub logo">
-        <rect width="32" height="32" rx="8" fill="var(--color-primary)"/>
-        <path d="M8 22V10l6 8V10M18 10v12h6c0-3-1-4-3-4s-3-1-3-4c0-2 1-4 3-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      NIFES <span style="color:var(--color-primary)">Study Hub</span>
-    </a>
-    <div class="nav-links">
-      <a href="#history">About</a>
-      <a href="#features">Features</a>
-      <a href="#cta">Get Started</a>
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">☀️</button>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="nav-logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+            <path d="m9 9 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="nav-logo-text">NIFES <span>Study Hub</span></div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#courses" class="nav-link">Courses</a>
+        <a href="#features" class="nav-link">CBT Simulator</a>
+        <a href="#features" class="nav-link">CGPA Calculator</a>
+        <a href="#about" class="nav-link">About NIFES</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+        <a href="app/index.html" class="btn btn-primary">Enter Study Hub</a>
+      </div>
     </div>
   </div>
-</nav>
+</header>
 
+<!-- ─── Hero Section ─── -->
 <section class="hero">
   <div class="container">
-    <div class="hero-badge">
-      <span class="hero-badge-dot"></span>
-      FUT Minna • NIFES Academic Commission
-    </div>
-    <h1>
-      Academic Excellence,<br>
-      <span>Rooted in Community.</span>
-    </h1>
-    <p>
-      An authentic digital archive of past examination questions, timed CBT mock test simulations, lecture notes, and Nigerian 5.0 CGPA tracking — designed by students, for students.
-    </p>
-    <div class="hero-actions">
-      <a href="app/index.html#signin" class="btn-primary">
-        Enter the Study Hub
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-      </a>
-      <a href="#features" class="btn-ghost">Explore Features</a>
-    </div>
-    <div class="hero-stats">
-      <div class="hero-stat"><div class="hero-stat-number">30+</div><div class="hero-stat-label">Past Questions</div></div>
-      <div class="hero-stat"><div class="hero-stat-number">100L – 300L</div><div class="hero-stat-label">Course Coverage</div></div>
-      <div class="hero-stat"><div class="hero-stat-number">5.0 Scale</div><div class="hero-stat-label">Nigerian CGPA</div></div>
-      <div class="hero-stat"><div class="hero-stat-number">Offline</div><div class="hero-stat-label">PWA Enabled</div></div>
+    <div class="hero-grid">
+      
+      <!-- Left: Value Proposition -->
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          FUT Minna Academic Commission • Exam Prep Portal
+        </div>
+        <h1>
+          Master Your Exams.<br>
+          <em>Study Smarter, Together.</em>
+        </h1>
+        <p>
+          The dedicated academic study hub for Federal University of Technology, Minna. Practice real timed CBT exams, review step-by-step past questions, and track your Nigerian 5.0 CGPA — 100% free.
+        </p>
+        <div class="hero-buttons">
+          <a href="app/index.html" class="btn btn-primary btn-lg">
+            Start CBT Practice
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </a>
+          <a href="#courses" class="btn btn-secondary btn-lg">Browse Past Questions</a>
+        </div>
+        
+        <div class="hero-stats-row">
+          <div class="hero-stat-item">
+            <div class="hero-stat-val">100L – 300L</div>
+            <div class="hero-stat-lbl">Course Levels</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="hero-stat-val">Real CBT</div>
+            <div class="hero-stat-lbl">Exam Mode</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="hero-stat-val">5.0 Scale</div>
+            <div class="hero-stat-lbl">CGPA Planner</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Modern Bento Student Dashboard Mockup -->
+      <div class="hero-preview">
+        <div class="preview-card">
+          <div class="preview-topbar">
+            <div class="preview-user">
+              <div class="preview-avatar">NS</div>
+              <div>
+                <div class="preview-username">FUT Minna Scholar</div>
+                <div class="preview-userlevel">School of Engineering (SEET)</div>
+              </div>
+            </div>
+            <div class="preview-status">Online • 1st Semester</div>
+          </div>
+
+          <div class="preview-grid">
+            
+            <!-- Bento 1: Active Exam Target -->
+            <div class="preview-box featured">
+              <div class="preview-box-tag">Upcoming CBT Mock</div>
+              <div class="preview-box-title">
+                <span>MTH 101 — Elementary Math I</span>
+                <span style="font-size:0.85rem;color:var(--color-primary);font-weight:700">45 Questions</span>
+              </div>
+              <div class="preview-box-desc">Differential Calculus, Quadratic Equations, Vectors & Trigonometry</div>
+              <div class="preview-progress-bar">
+                <div class="preview-progress-fill"></div>
+              </div>
+            </div>
+
+            <!-- Bento 2: Pomodoro Focus Timer -->
+            <div class="preview-box">
+              <div class="preview-box-tag">Study Focus Sprint</div>
+              <div class="preview-timer-num">25:00</div>
+              <div class="preview-box-desc" style="margin-top:6px">Session 2 of 4 • Deep Focus Mode</div>
+            </div>
+
+            <!-- Bento 3: Quick CGPA Standing -->
+            <div class="preview-box">
+              <div class="preview-box-tag">CGPA Target</div>
+              <div class="preview-timer-num" style="color:var(--color-primary)">4.75</div>
+              <div class="preview-box-desc" style="margin-top:6px">First Class Standing • 5.0 Scale</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
-<section class="section" id="history">
+<!-- ─── Popular Courses Section ─── -->
+<section class="section" id="courses">
   <div class="container">
-    <div class="history-grid">
-      <div class="history-image">
-        <svg class="history-image-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-          <path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/>
-        </svg>
-        <p>The Federal University of Technology, Minna — where academic excellence meets fellowship.</p>
-      </div>
-      <div class="history-content">
-        <div class="section-label">Our Story</div>
-        <h2>NIFES at FUT Minna</h2>
-        <p>
-          <strong>NIFES</strong> (Nigerian Fellowship of Evangelical Students) is an interdenominational 
-          Christian fellowship present on university campuses across Nigeria. At the 
-          <strong>Federal University of Technology, Minna</strong>, NIFES has been a home for students 
-          seeking to integrate faith with academic excellence.
-        </p>
-        <p>
-          The fellowship provides a community where students grow spiritually, build lasting 
-          friendships, and support one another through the rigours of engineering and technology 
-          education. The NIFES Study Hub is an extension of that mission — a digital library 
-          where students past and present pool their academic resources for the benefit of all.
-        </p>
-      </div>
+    <div class="section-header">
+      <span class="section-badge">Verified Question Bank</span>
+      <h2 class="section-title">Explore Courses by Level</h2>
+      <p class="section-desc">Carefully curated past questions and step-by-step solutions for 100L, 200L, and 300L students.</p>
+    </div>
+
+    <div class="courses-grid">
+      
+      <a href="app/index.html" class="course-card">
+        <div class="course-code-wrap">
+          <span class="course-code">MTH 101</span>
+          <span class="course-level">100 Level</span>
+        </div>
+        <div class="course-name">Elementary Mathematics I</div>
+        <div class="course-meta">
+          <span>Algebra & Calculus</span>
+          <strong style="color:var(--color-primary)">Practice CBT →</strong>
+        </div>
+      </a>
+
+      <a href="app/index.html" class="course-card">
+        <div class="course-code-wrap">
+          <span class="course-code">PHY 101</span>
+          <span class="course-level">100 Level</span>
+        </div>
+        <div class="course-name">General Physics I (Mechanics)</div>
+        <div class="course-meta">
+          <span>Vectors, Motion, Energy</span>
+          <strong style="color:var(--color-primary)">Practice CBT →</strong>
+        </div>
+      </a>
+
+      <a href="app/index.html" class="course-card">
+        <div class="course-code-wrap">
+          <span class="course-code">CHM 101</span>
+          <span class="course-level">100 Level</span>
+        </div>
+        <div class="course-name">General Chemistry I</div>
+        <div class="course-meta">
+          <span>Stoichiometry & Structure</span>
+          <strong style="color:var(--color-primary)">Practice CBT →</strong>
+        </div>
+      </a>
+
+      <a href="app/index.html" class="course-card">
+        <div class="course-code-wrap">
+          <span class="course-code">GST 101</span>
+          <span class="course-level">100 Level</span>
+        </div>
+        <div class="course-name">Use of English & Communication</div>
+        <div class="course-meta">
+          <span>Comprehension & Grammar</span>
+          <strong style="color:var(--color-primary)">Practice CBT →</strong>
+        </div>
+      </a>
+
+      <a href="app/index.html" class="course-card">
+        <div class="course-code-wrap">
+          <span class="course-code">CSC 101</span>
+          <span class="course-level">100 Level</span>
+        </div>
+        <div class="course-name">Intro to Computer Science</div>
+        <div class="course-meta">
+          <span>Hardware & Algorithms</span>
+          <strong style="color:var(--color-primary)">Practice CBT →</strong>
+        </div>
+      </a>
+
+      <a href="app/index.html" class="course-card">
+        <div class="course-code-wrap">
+          <span class="course-code">MTH 201</span>
+          <span class="course-level">200 Level</span>
+        </div>
+        <div class="course-name">Mathematical Methods I</div>
+        <div class="course-meta">
+          <span>Differential Equations</span>
+          <strong style="color:var(--color-primary)">Practice CBT →</strong>
+        </div>
+      </a>
+
+      <a href="app/index.html" class="course-card">
+        <div class="course-code-wrap">
+          <span class="course-code">MEE 201</span>
+          <span class="course-level">200 Level</span>
+        </div>
+        <div class="course-name">Applied Mechanics (Statics)</div>
+        <div class="course-meta">
+          <span>Forces, Equilibrium, Trusses</span>
+          <strong style="color:var(--color-primary)">Practice CBT →</strong>
+        </div>
+      </a>
+
+      <a href="app/index.html" class="course-card">
+        <div class="course-code-wrap">
+          <span class="course-code">EEE 201</span>
+          <span class="course-level">200 Level</span>
+        </div>
+        <div class="course-name">Applied Electricity I</div>
+        <div class="course-meta">
+          <span>Ohm's & Kirchhoff's Laws</span>
+          <strong style="color:var(--color-primary)">Practice CBT →</strong>
+        </div>
+      </a>
+
     </div>
   </div>
 </section>
 
+<!-- ─── Core Features (Clean, proportional icons) ─── -->
 <section class="section" id="features">
   <div class="container">
     <div class="section-header">
-      <div class="section-label">What You Get</div>
-      <h2 class="section-title">Everything You Need to Succeed</h2>
-      <p class="section-desc">From past questions to CGPA tracking — one platform for your entire academic journey.</p>
+      <span class="section-badge">Student-Centered Tools</span>
+      <h2 class="section-title">Everything Built for Academic Success</h2>
+      <p class="section-desc">Designed from the ground up for university students tackling rigorous tests and exams.</p>
     </div>
+
     <div class="features-grid">
+      
+      <!-- Feature 1 -->
       <div class="feature-card">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <h3>Timed CBT Exam Mode</h3>
-        <p>Real-time countdown timer, question palette navigator, flagging system, and complete post-test analytics modeled after JAMB and Post-UTME CBT.</p>
+        <div class="feature-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <h3>Timed CBT Mock Simulator</h3>
+        <p>Experience real exam pressure. Features live countdown timers, question palette jump navigator, flag for review, and deep post-test score analysis.</p>
       </div>
+
+      <!-- Feature 2 -->
       <div class="feature-card">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        <h3>Pomodoro Focus Timer</h3>
-        <p>Built-in study timer with customizable focus sprints, restful breaks, background mini-pill, daily session tracking, and audio bell chime.</p>
+        <div class="feature-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+            <polyline points="10 8 10 12 14 12"/>
+          </svg>
+        </div>
+        <h3>Verified Past Questions Bank</h3>
+        <p>Access hundreds of past exam questions organized by department, level, and semester with comprehensive step-by-step explanations.</p>
       </div>
+
+      <!-- Feature 3 -->
       <div class="feature-card">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        <h3>100% Offline PWA Ready</h3>
-        <p>Installable on Android, iOS, Windows, and Mac. Fully usable offline with pre-cached past questions and student calculators when off-grid.</p>
+        <div class="feature-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/><path d="M16 2v4M8 2v4"/>
+          </svg>
+        </div>
+        <h3>Pomodoro Study Focus Timer</h3>
+        <p>Beat procrastination with integrated 25-minute focus sprints, customizable break intervals, daily progress tracking, and gentle chime alerts.</p>
       </div>
+
+      <!-- Feature 4 -->
       <div class="feature-card">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-        <h3>Past Questions Library</h3>
-        <p>Browse a rich collection of past exam questions organized by level (100L–300L), course code, topic, and year with step-by-step solutions.</p>
+        <div class="feature-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>
+          </svg>
+        </div>
+        <h3>Nigerian 5.0 CGPA Calculator</h3>
+        <p>Calculate your semester GPA and cumulative CGPA according to exact FUT Minna grading scales (A=5, B=4, C=3, D=2, E=1, F=0) with target forecasting.</p>
       </div>
+
+      <!-- Feature 5 -->
       <div class="feature-card">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h.01M15 9h.01M9 15h6"/></svg>
-        <h3>Scientific Calculator</h3>
-        <p>Built-in engineering calculator with trigonometry, logarithms, roots, powers, and constants &mdash; no external apps or tabs needed.</p>
+        <div class="feature-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a4.5 4.5 0 0 0 0-9H15"/><path d="M12 5V2"/><path d="M10 2h4"/>
+          </svg>
+        </div>
+        <h3>Scientific & Engineering Calculator</h3>
+        <p>Built-in engineering calculator for complex numbers, trigonometry, roots, powers, and standard physical constants without leaving the exam screen.</p>
       </div>
+
+      <!-- Feature 6 -->
       <div class="feature-card">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-        <h3>CGPA 5.0 Calculator</h3>
-        <p>Track your semester GPA and cumulative CGPA using the official Nigerian 5.0 grading scale with instant degree classification.</p>
+        <div class="feature-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          </svg>
+        </div>
+        <h3>Curated by Senior Scholars</h3>
+        <p>Resources, high-yield lecture summaries, and solutions contributed and vetted by senior executive scholars across FUT Minna engineering and science faculties.</p>
       </div>
+
     </div>
   </div>
 </section>
 
-<section class="cta" id="cta">
+<!-- ─── How it Works ─── -->
+<section class="section">
   <div class="container">
-    <h2>Ready to Join the Hub?</h2>
-    <p>Sign up to contribute past questions, upload materials, save your quiz history, and unlock the full experience.</p>
-    <div class="hero-actions">
-      <a href="app/index.html#signin" class="btn-primary">
-        Enter the Study Hub
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-      </a>
+    <div class="section-header">
+      <span class="section-badge">Simple 3-Step Process</span>
+      <h2 class="section-title">How to Use the Study Hub</h2>
+      <p class="section-desc">Get ready for test week in three seamless steps.</p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Select Your Course</h3>
+        <p>Choose your course code (e.g. MTH 101, PHY 101) or browse by department and level to find relevant materials.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>Simulate Real CBT Tests</h3>
+        <p>Practice under timed conditions with real multiple choice questions. Flag challenging questions and jump around the palette.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>Review Solutions & Score High</h3>
+        <p>Analyze your weak topics with step-by-step verified explanations, plan your 5.0 CGPA, and walk into exam halls confident.</p>
+      </div>
+    </div>
+
+    <!-- CTA Banner -->
+    <div class="cta-banner">
+      <h2>Ready to Elevate Your Academic Standing?</h2>
+      <p>Join thousands of students studying with verified FUT Minna questions and CBT simulations today.</p>
+      <a href="app/index.html" class="btn btn-primary btn-lg">Launch Study Hub Now</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── About NIFES Section ─── -->
+<section class="section" id="about" style="background:var(--color-surface)">
+  <div class="container">
+    <div style="max-width:760px;margin:0 auto;text-align:center">
+      <span class="section-badge">Academic Commission</span>
+      <h2 class="section-title" style="margin-bottom:16px">About NIFES FUT Minna</h2>
+      <p style="font-size:1.02rem;color:var(--color-text-muted);line-height:1.8;margin-bottom:20px">
+        The <strong>Nigeria Fellowship of Evangelical Students (NIFES)</strong> at the Federal University of Technology, Minna is an interdenominational fellowship committed to raising leaders who integrate Christian discipleship with academic excellence.
+      </p>
+      <p style="font-size:0.95rem;color:var(--color-text-muted);line-height:1.75">
+        The NIFES Study Hub is an initiative of the <strong>NIFES Academic Commission</strong>, pooling verified past questions, exam simulations, and study tools to ensure every student has the resources they need to graduate with distinction.
+      </p>
     </div>
   </div>
 </section>
 
+<!-- ─── Footer ─── -->
 <footer class="footer">
   <div class="container">
-    <p>NIFES Study Hub &mdash; Federal University of Technology, Minna</p>
-    <p style="margin-top:var(--space-2);font-size:.8rem;color:var(--color-text-faint)">Built by <a href="https://github.com/DebugAyo" target="_blank" style="color:var(--color-primary);text-decoration:none">DebugAyo</a></p>
+    <p>© 2026 NIFES Study Hub — Federal University of Technology, Minna (FUT Minna)</p>
+    <p style="margin-top:8px;font-size:0.8rem;color:var(--color-text-faint)">
+      Curated with ❤️ by the Academic Commission • Built by <a href="https://github.com/debugAyo" target="_blank">DebugAyo</a>
+    </p>
   </div>
 </footer>
 
 <script>
+// Theme management
 (function() {
   var saved = localStorage.getItem('nifes_theme') || 'light';
   document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
 })();
 
 function updateThemeUI(theme) {
@@ -296,19 +581,15 @@ function toggleTheme() {
   updateThemeUI(next);
 }
 
+// Nav shadow on scroll
 var nav = document.getElementById('nav');
 window.addEventListener('scroll', function() {
-  nav.classList.toggle('scrolled', window.scrollY > 60);
+  nav.classList.toggle('scrolled', window.scrollY > 20);
 });
 
-// Set initial theme toggle icon
-updateThemeUI(document.documentElement.getAttribute('data-theme') || 'light');
-
-// Service Worker Registration for PWA
+// Service Worker for background caching
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(function(err) {
-    console.warn('[PWA] SW register failed:', err);
-  });
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
 }
 </script>
 </body>
