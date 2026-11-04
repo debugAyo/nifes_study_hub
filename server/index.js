@@ -11,20 +11,29 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ─── Security headers ─────────────────────────────
-app.use(helmet());
+// Allow cross-origin asset access (so Vercel frontend can display /uploads)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // ─── CORS ─────────────────────────────────────────
-var allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',')
-  : ['http://localhost:8000', 'http://localhost:3000'];
+var configuredOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(function (s) { return s.trim(); })
+  : ['http://localhost:8000', 'http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:8000'];
 
 app.use(cors({
   origin: function (origin, cb) {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    if (!origin) return cb(null, true);
+    if (configuredOrigins.includes('*')) return cb(null, true);
+    if (configuredOrigins.includes(origin)) return cb(null, true);
+    // Automatically allow Vercel previews and production domains (*.vercel.app)
+    if (/\.vercel\.app$/i.test(origin)) return cb(null, true);
+    console.warn('[CORS] Blocked request from origin:', origin);
     cb(null, false);
   },
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
 app.use(express.json({ limit: '10mb' }));
