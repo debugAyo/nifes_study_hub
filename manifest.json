@@ -1,0 +1,20 @@
+{
+  "name": "NIFES Study Hub — Past Questions & Academic Platform",
+  "short_name": "NIFES Study Hub",
+  "description": "Digital academic library, CBT practice tests, past questions, and student tools for Nigerian university students.",
+  "start_url": "/app/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f8f7f2",
+  "theme_color": "#0d5c3a",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

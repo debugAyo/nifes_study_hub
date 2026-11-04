@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300..700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0d5c3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NIFES Hub">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -104,6 +109,10 @@
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Continue with Google
     </button>
+    <button type="button" class="btn-ghost w-full" onclick="continueAsGuest()" style="margin-top:var(--space-3);display:flex;align-items:center;justify-content:center;gap:var(--space-2)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Continue as Guest (Offline Study)
+    </button>
 
     <p class="auth-page-footer">
       <a href="../index.html" class="auth-page-back">← Back to landing page</a>
@@ -133,6 +142,16 @@
       <input class="search-input" type="search" placeholder="Search questions…" id="searchInput" oninput="handleSearch(this.value)">
     </div>
     <div class="header-actions">
+      <div class="network-badge online" id="networkStatusBadge" title="Network Connection Status">
+        <span class="network-dot"></span>
+        <span class="network-text">Online</span>
+      </div>
+      <button class="pomodoro-mini-pill" id="pomodoroMiniPill" onclick="navigate('pomodoro');initPomodoroView()" style="display:none" title="Open Pomodoro Focus Timer">
+        <span class="pill-time">🍅 25:00</span>
+      </button>
+      <button class="btn-icon" id="pwaInstallBtn" onclick="installPWA()" title="Install NIFES Study Hub App" style="display:none" aria-label="Install App">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
       <button class="btn-icon" onclick="toggleSearch()" title="Search" aria-label="Toggle search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       </button>
@@ -188,6 +207,10 @@
     </div>
     <div class="nav-section">
       <div class="nav-section-title">Tools</div>
+      <button class="nav-item" onclick="navigate('pomodoro');initPomodoroView()" id="nav-pomodoro">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Pomodoro Focus
+      </button>
       <button class="nav-item" onclick="navigate('calculator');initCalculatorView()" id="nav-calculator">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h4"/></svg>
         Scientific Calculator
@@ -343,25 +366,54 @@
       </div>
     </div>
 
-    <!-- ─── Practice Test ─── -->
+    <!-- ─── Practice Test & Timed CBT ─── -->
     <div class="view" id="view-practice">
       <button class="back-btn" onclick="navigate('dashboard')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
         Back to Dashboard
       </button>
-      <h1 class="page-title">Practice Test</h1>
-      <p class="page-subtitle">Test your knowledge with past questions. Select your level and course to begin.</p>
+      <div class="page-header-flex">
+        <div>
+          <h1 class="page-title">CBT Practice & Exam Simulator</h1>
+          <p class="page-subtitle">Timed simulated tests and self-paced study past questions with Nigerian university standards.</p>
+        </div>
+      </div>
 
       <div id="quizSetup">
         <div class="quiz-setup">
           <div class="form-card">
-            <div class="quiz-setup-title">Quiz Setup</div>
-            <div class="quiz-setup-desc">Configure your practice test below.</div>
+            <div class="quiz-setup-title">Configure Your Test Session</div>
+            <div class="quiz-setup-desc">Choose between a timed CBT simulation or step-by-step study mode.</div>
+
+            <!-- Mode Selector -->
             <div class="form-group">
-              <label class="form-label" for="quizMatric">Matric Number</label>
-              <input class="form-input" id="quizMatric" placeholder="e.g. NIF/2024/001">
-              <div class="form-hint">Saved for future sessions.</div>
+              <label class="form-label">Exam Mode</label>
+              <div class="cbt-mode-grid">
+                <div class="cbt-mode-card active" id="modeCardExam" onclick="setQuizMode('exam')">
+                  <div class="cbt-mode-badge">Recommended</div>
+                  <div class="cbt-mode-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Timed CBT Exam
+                  </div>
+                  <div class="cbt-mode-desc">Simulates JAMB / Post-UTME / Semester CBT exam with a countdown clock, question palette, and comprehensive final analytics.</div>
+                </div>
+                <div class="cbt-mode-card" id="modeCardPractice" onclick="setQuizMode('practice')">
+                  <div class="cbt-mode-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    Self-Paced Study
+                  </div>
+                  <div class="cbt-mode-desc">Learn as you go: reveal solutions immediately, view step-by-step worked answers, and self-grade each question.</div>
+                </div>
+              </div>
+              <input type="hidden" id="quizModeInput" value="exam">
             </div>
+
+            <div class="form-group">
+              <label class="form-label" for="quizMatric">Matric / Registration Number (Optional)</label>
+              <input class="form-input" id="quizMatric" placeholder="e.g. 2024/1/12345EE">
+              <div class="form-hint">Used to record your mock test score history.</div>
+            </div>
+
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label" for="quizLevel">Level *</label>
@@ -379,76 +431,234 @@
                 </select>
               </div>
             </div>
+
+            <div class="form-grid">
+              <div class="form-group" id="quizDurationGroup">
+                <label class="form-label" for="quizDuration">Time Limit</label>
+                <select class="form-select" id="quizDuration">
+                  <option value="15" selected>15 Minutes</option>
+                  <option value="10">10 Minutes (Sprint)</option>
+                  <option value="20">20 Minutes</option>
+                  <option value="30">30 Minutes (Standard)</option>
+                  <option value="45">45 Minutes</option>
+                  <option value="60">60 Minutes (Full Exam)</option>
+                  <option value="0">Untimed</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="quizType">Question Type</label>
+                <select class="form-select" id="quizType">
+                  <option value="">All Question Types</option>
+                  <option value="MCQ" selected>MCQ (Multiple Choice)</option>
+                  <option value="Calculation">Calculation</option>
+                  <option value="Theory">Theory</option>
+                  <option value="Essay">Essay</option>
+                </select>
+              </div>
+            </div>
+
             <div class="form-group">
               <label class="form-label">Number of Questions</label>
               <div class="radio-group">
-                <label class="radio-label"><input type="radio" name="quizCount" value="5"> <span>5</span></label>
-                <label class="radio-label"><input type="radio" name="quizCount" value="10" checked> <span>10</span></label>
-                <label class="radio-label"><input type="radio" name="quizCount" value="15"> <span>15</span></label>
-                <label class="radio-label"><input type="radio" name="quizCount" value="all"> <span>All</span></label>
+                <label class="radio-label"><input type="radio" name="quizCount" value="5"> <span>5 Questions</span></label>
+                <label class="radio-label"><input type="radio" name="quizCount" value="10" checked> <span>10 Questions</span></label>
+                <label class="radio-label"><input type="radio" name="quizCount" value="15"> <span>15 Questions</span></label>
+                <label class="radio-label"><input type="radio" name="quizCount" value="25"> <span>25 Questions</span></label>
+                <label class="radio-label"><input type="radio" name="quizCount" value="all"> <span>All Available</span></label>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="quizType">Question Type (Optional)</label>
-              <select class="form-select" id="quizType">
-                <option value="">All Types</option>
-                <option value="Theory">Theory</option>
-                <option value="Calculation">Calculation</option>
-                <option value="Essay">Essay</option>
-                <option value="MCQ">MCQ</option>
-              </select>
+
+            <div class="form-actions" style="margin-top:var(--space-6)">
+              <button class="btn-primary" onclick="startQuiz()" style="min-width:180px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Launch Test Session
+              </button>
             </div>
-            <div class="form-actions">
-              <button class="btn-primary" onclick="startQuiz()">Start Quiz</button>
-            </div>
+          </div>
+
+          <!-- Past Session History -->
+          <div class="quiz-history-card" id="quizHistorySection" style="margin-top:var(--space-6)">
+            <h3 class="section-subtitle" style="margin-bottom:var(--space-3)">Recent CBT Attempts</h3>
+            <div id="quizHistoryList"></div>
           </div>
         </div>
       </div>
 
+      <!-- CBT / Quiz Engine -->
       <div id="quizEngine" style="display:none">
-        <div class="quiz-progress">
-          <span class="quiz-progress-text" id="quizProgress">Question 1 of 10</span>
-          <div class="quiz-progress-bar">
-            <div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div>
+        <!-- CBT Sticky Header -->
+        <div class="cbt-header-bar">
+          <div class="cbt-header-meta">
+            <span class="quiz-level-badge" id="quizLevelBadge">100L · MTH 101</span>
+            <span class="cbt-counter" id="quizProgress">Question 1 of 10</span>
+          </div>
+          
+          <div class="cbt-timer-container" id="cbtTimerWrap">
+            <div class="cbt-timer-pill" id="cbtTimerPill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span id="cbtTimerDisplay">15:00</span>
+            </div>
+          </div>
+
+          <div class="cbt-header-controls">
+            <button class="btn-flag" id="quizFlagBtn" onclick="toggleQuizFlag()" title="Flag question for review">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              <span id="quizFlagText">Flag</span>
+            </button>
+            <button class="btn-submit-cbt" id="cbtSubmitBtn" onclick="openCbtSubmitModal()">
+              Submit Test
+            </button>
           </div>
         </div>
+
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div>
+        </div>
+
+        <!-- Question Card -->
         <div class="quiz-card">
           <div class="quiz-card-header">
-            <span class="quiz-question-num" id="quizQuestionNum">Question 1</span>
-            <span class="quiz-level-badge" id="quizLevelBadge">100L</span>
+            <div style="display:flex;align-items:center;gap:var(--space-2)">
+              <span class="quiz-question-num" id="quizQuestionNum">Question 1</span>
+              <span class="flag-badge" id="quizCardFlagged" style="display:none">⚑ Flagged for review</span>
+            </div>
+            <span class="quiz-type-badge" id="quizTypeBadge">MCQ</span>
           </div>
+
           <p class="quiz-question-text" id="quizQuestionText"></p>
+          
+          <!-- MCQ Options -->
           <div class="quiz-options" id="quizOptions"></div>
-          <div class="form-actions">
-            <button class="btn-primary" id="quizShowBtn" onclick="showQuizAnswer()">Show Answer</button>
+
+          <!-- Navigation Buttons -->
+          <div class="cbt-nav-row">
+            <button class="btn-ghost" id="quizPrevBtn" onclick="quizPrev()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+              Previous
+            </button>
+            <div class="cbt-nav-middle">
+              <button class="btn-primary" id="quizShowBtn" onclick="showQuizAnswer()" style="display:none">
+                Reveal Solution
+              </button>
+            </div>
+            <button class="btn-primary" id="quizNextBtn" onclick="quizNext()">
+              Next
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
           </div>
+
+          <!-- Answer Section (For Self-Paced Practice Mode) -->
           <div class="quiz-answer-section" id="quizAnswerSection">
             <div class="quiz-answer-box" id="quizAnswerBox"></div>
             <div class="quiz-actions" style="display:flex;gap:var(--space-3)">
-              <button class="btn-success" id="quizGotIt" onclick="quizGotIt()" style="display:none">Got it</button>
-              <button class="btn-danger" id="quizMissedIt" onclick="quizMissedIt()" style="display:none">Missed it</button>
+              <button class="btn-success" id="quizGotIt" onclick="quizGotIt()" style="display:none">✓ Got It Right</button>
+              <button class="btn-danger" id="quizMissedIt" onclick="quizMissedIt()" style="display:none">✕ Missed It</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Question Palette (Grid of Question Numbers) -->
+        <div class="cbt-palette-card" id="cbtPaletteCard">
+          <div class="cbt-palette-header">
+            <span class="cbt-palette-title">Question Navigator</span>
+            <div class="cbt-palette-legend">
+              <span class="legend-item"><span class="legend-dot answered"></span> Answered</span>
+              <span class="legend-item"><span class="legend-dot flagged"></span> Flagged</span>
+              <span class="legend-item"><span class="legend-dot current"></span> Current</span>
+              <span class="legend-item"><span class="legend-dot unanswered"></span> Unanswered</span>
+            </div>
+          </div>
+          <div class="cbt-palette-grid" id="cbtPaletteGrid"></div>
+        </div>
+      </div>
+
+      <!-- CBT Submit Confirmation Modal -->
+      <div class="modal-overlay hidden" id="cbtSubmitModal">
+        <div class="modal-card cbt-modal-content">
+          <div class="modal-header">
+            <h3 class="modal-title">Ready to Submit?</h3>
+            <button class="modal-close" onclick="closeCbtSubmitModal()">&times;</button>
+          </div>
+          <p style="color:var(--color-text-muted);margin-bottom:var(--space-4);font-size:var(--text-sm)">
+            Review your test progress before final grading:
+          </p>
+          <div class="cbt-summary-grid">
+            <div class="cbt-summary-box">
+              <div class="cbt-summary-num" id="modalTotalQ">10</div>
+              <div class="cbt-summary-label">Total</div>
+            </div>
+            <div class="cbt-summary-box text-success">
+              <div class="cbt-summary-num" id="modalAnsweredQ">8</div>
+              <div class="cbt-summary-label">Answered</div>
+            </div>
+            <div class="cbt-summary-box text-warning">
+              <div class="cbt-summary-num" id="modalUnansweredQ">2</div>
+              <div class="cbt-summary-label">Unanswered</div>
+            </div>
+            <div class="cbt-summary-box text-accent">
+              <div class="cbt-summary-num" id="modalFlaggedQ">1</div>
+              <div class="cbt-summary-label">Flagged</div>
+            </div>
+          </div>
+          <div class="modal-actions" style="margin-top:var(--space-6);display:flex;justify-content:flex-end;gap:var(--space-3)">
+            <button class="btn-ghost" onclick="closeCbtSubmitModal()">Continue Test</button>
+            <button class="btn-primary" onclick="confirmCbtSubmit()">Confirm & Submit Exam</button>
           </div>
         </div>
       </div>
 
+      <!-- Results View -->
       <div id="quizResults" style="display:none">
         <div class="quiz-result">
           <div class="quiz-result-icon" id="resultIcon">🎉</div>
           <div class="quiz-result-score" id="resultScore">0 / 0</div>
           <div class="quiz-result-pct" id="resultPct">0%</div>
           <div class="quiz-result-label" id="resultLabel">Keep going!</div>
+          
           <div class="quiz-result-bar">
             <div class="quiz-result-fill" id="resultFill" style="width:0%"></div>
           </div>
-          <div class="quiz-result-stats">
-            <div class="quiz-stat"><div class="quiz-stat-value correct" id="resultCorrect">0</div><div class="quiz-stat-label">Correct</div></div>
-            <div class="quiz-stat"><div class="quiz-stat-value wrong" id="resultWrong">0</div><div class="quiz-stat-label">Wrong</div></div>
+
+          <!-- Extended CBT Performance Metrics -->
+          <div class="cbt-metrics-grid">
+            <div class="cbt-metric-item">
+              <div class="cbt-metric-val" id="resCorrectCount">0</div>
+              <div class="cbt-metric-lbl">Correct</div>
+            </div>
+            <div class="cbt-metric-item">
+              <div class="cbt-metric-val" id="resWrongCount">0</div>
+              <div class="cbt-metric-lbl">Incorrect</div>
+            </div>
+            <div class="cbt-metric-item">
+              <div class="cbt-metric-val" id="resTimeSpent">0m 0s</div>
+              <div class="cbt-metric-lbl">Time Spent</div>
+            </div>
+            <div class="cbt-metric-item">
+              <div class="cbt-metric-val" id="resPace">0s</div>
+              <div class="cbt-metric-lbl">Pace / Question</div>
+            </div>
           </div>
+
+          <!-- Review Filter Tabs -->
+          <div class="cbt-review-filter-tabs">
+            <button class="tab-btn active" onclick="filterCbtReview('all', this)" id="btnReviewAll">All Questions (<span id="countReviewAll">0</span>)</button>
+            <button class="tab-btn" onclick="filterCbtReview('correct', this)">Correct (<span id="countReviewCorrect">0</span>)</button>
+            <button class="tab-btn" onclick="filterCbtReview('missed', this)">Missed (<span id="countReviewMissed">0</span>)</button>
+            <button class="tab-btn" onclick="filterCbtReview('flagged', this)">Flagged (<span id="countReviewFlagged">0</span>)</button>
+          </div>
+
+          <!-- Detailed Question Review List -->
           <div id="resultMissed"></div>
-          <div class="quiz-actions-row">
-            <button class="btn-primary" id="resultRetryBtn" onclick="retryMissed()">Retry Missed</button>
-            <button class="btn-ghost" onclick="newTest()">New Test</button>
+
+          <div class="quiz-actions-row" style="margin-top:var(--space-6)">
+            <button class="btn-primary" id="resultRetryBtn" onclick="retryMissed()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+              Retry Missed Questions
+            </button>
+            <button class="btn-ghost" onclick="newTest()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              New Test Session
+            </button>
             <button class="btn-ghost" onclick="navigate('dashboard')">Back to Dashboard</button>
           </div>
         </div>
@@ -773,6 +983,93 @@
       </div>
     </div>
 
+    <!-- ─── Pomodoro Focus Timer ─── -->
+    <div class="view" id="view-pomodoro">
+      <button class="back-btn" onclick="navigate('dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        Back to Dashboard
+      </button>
+      <div class="page-header-flex">
+        <div>
+          <h1 class="page-title">Pomodoro Focus Timer</h1>
+          <p class="page-subtitle">Stay laser-focused during study sessions using interval sprints and restful breaks.</p>
+        </div>
+        <div>
+          <button class="btn-ghost btn-sm" onclick="openPomodoroSettings()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Timer Settings
+          </button>
+        </div>
+      </div>
+
+      <div class="pomodoro-container">
+        <!-- Mode Switcher -->
+        <div class="pomodoro-mode-switch">
+          <button class="pomodoro-mode-btn active" data-mode="work" onclick="setPomodoroMode('work')">
+            🍅 Focus (25m)
+          </button>
+          <button class="pomodoro-mode-btn" data-mode="shortBreak" onclick="setPomodoroMode('shortBreak')">
+            ☕ Short Break (5m)
+          </button>
+          <button class="pomodoro-mode-btn" data-mode="longBreak" onclick="setPomodoroMode('longBreak')">
+            🌴 Long Break (15m)
+          </button>
+        </div>
+
+        <!-- Timer Card -->
+        <div class="pomodoro-card">
+          <!-- Circular Progress Ring -->
+          <div class="pomodoro-clock-wrap">
+            <svg class="pomodoro-svg" width="300" height="300" viewBox="0 0 300 300">
+              <circle class="pomodoro-circle-bg" cx="150" cy="150" r="130"></circle>
+              <circle class="pomodoro-circle-progress" id="pomodoroProgressRing" cx="150" cy="150" r="130"></circle>
+            </svg>
+            <div class="pomodoro-clock-inner">
+              <div class="pomodoro-time-display" id="pomodoroTime">25:00</div>
+              <div class="pomodoro-status-tag" id="pomodoroStatusLabel">Study Sprint</div>
+            </div>
+          </div>
+
+          <!-- Quick Focus Task Input -->
+          <div class="pomodoro-task-box">
+            <input type="text" id="pomodoroTaskInput" class="pomodoro-task-input" placeholder="What are you studying right now? (e.g. MEE 201 Fluid Mechanics)" oninput="handlePomodoroTaskChange(this.value)">
+          </div>
+
+          <!-- Timer Actions -->
+          <div class="pomodoro-controls">
+            <button class="btn-ghost" onclick="resetPomodoro()" title="Reset Timer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Reset
+            </button>
+            <button class="btn-primary pomodoro-play-btn" id="pomodoroToggleBtn" onclick="togglePomodoro()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start Focus
+            </button>
+            <button class="btn-ghost" onclick="skipPomodoro()" title="Skip this interval">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+              Skip
+            </button>
+          </div>
+        </div>
+
+        <!-- Session Stats Grid -->
+        <div class="pomodoro-stats-grid">
+          <div class="pomodoro-stat-box">
+            <div class="pomodoro-stat-num" id="pomodoroSessionCount">0</div>
+            <div class="pomodoro-stat-label">Focus Blocks Today</div>
+          </div>
+          <div class="pomodoro-stat-box">
+            <div class="pomodoro-stat-num" id="pomodoroTotalMinutes">0 mins</div>
+            <div class="pomodoro-stat-label">Total Time Focused</div>
+          </div>
+          <div class="pomodoro-stat-box">
+            <div class="pomodoro-stat-num" id="pomodoroStreakBadge">🔥 Active</div>
+            <div class="pomodoro-stat-label">Daily Focus Rhythm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ─── Profile ─── -->
     <div class="view" id="view-profile">
       <button class="back-btn" onclick="navigate('dashboard')">
@@ -837,6 +1134,10 @@
     <button class="drawer-item" onclick="drawerNav('add')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
       Add Question
+    </button>
+    <button class="drawer-item" onclick="drawerNav('pomodoro');initPomodoroView()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Pomodoro Focus
     </button>
     <button class="drawer-item" onclick="drawerNav('calculator');initCalculatorView()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h4"/></svg>
@@ -965,7 +1266,35 @@
     </div>
   </div>
 
-<!-- ═══ SCRIPTS ═══ -->
+  <!-- ═══ POMODORO SETTINGS MODAL ═══ -->
+  <div class="modal-overlay hidden" id="pomodoroSettingsModal" onclick="closePomodoroSettings()">
+    <div class="modal-card" onclick="event.stopPropagation()" style="max-width:440px">
+      <div class="modal-header">
+        <h3 class="modal-title">Pomodoro Timer Settings</h3>
+        <button class="modal-close" onclick="closePomodoroSettings()">&times;</button>
+      </div>
+      <form onsubmit="savePomodoroSettings(event)">
+        <div class="form-group">
+          <label class="form-label" for="pomSetWork">Focus Duration (minutes)</label>
+          <input type="number" id="pomSetWork" class="form-input" min="1" max="120" value="25" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pomSetShort">Short Break (minutes)</label>
+          <input type="number" id="pomSetShort" class="form-input" min="1" max="30" value="5" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pomSetLong">Long Break (minutes)</label>
+          <input type="number" id="pomSetLong" class="form-input" min="1" max="60" value="15" required>
+        </div>
+        <div class="form-hint" style="margin-bottom:var(--space-4)">
+          A pleasant audio bell chime plays at the end of each session.
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary w-full">Save Preferences</button>
+        </div>
+      </form>
+    </div>
+  </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/seed.js"></script>

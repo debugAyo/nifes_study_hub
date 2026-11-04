@@ -60,10 +60,58 @@ var quizSelectedOption = '';
 var quizMissed = [];
 var quizTotal = 0;
 var quizActive = false;
+var quizMode = 'exam'; // 'exam' | 'practice'
+var quizDurationMins = 15;
+var quizTimeLeft = 0;
+var quizTimerId = null;
+var quizUserAnswers = []; // [qIndex] -> 'A' | 'B' | 'C' | 'D' | null
+var quizFlagged = []; // [qIndex] -> boolean
+var quizStartTime = 0;
+var quizEndTime = 0;
+var currentReviewFilter = 'all';
+var deferredPWAInstallPrompt = null;
 
 /* ─── Init ────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async function() {
   initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // 1. Service Worker Registration (PWA Offline Capability)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function(reg) {
+      console.log('[PWA] Service Worker registered:', reg.scope);
+    }).catch(function(err) {
+      console.warn('[PWA] Service Worker registration failed:', err);
+    });
+  }
+
+  // 2. Real-Time Network Status Indicator
+  function updateNetworkStatus() {
+    var badge = document.getElementById('networkStatusBadge');
+    if (!badge) return;
+    if (navigator.onLine) {
+      badge.className = 'network-badge online';
+      var textEl = badge.querySelector('.network-text');
+      if (textEl) textEl.textContent = 'Online';
+      badge.title = 'Connected to network';
+    } else {
+      badge.className = 'network-badge offline';
+      var textEl = badge.querySelector('.network-text');
+      if (textEl) textEl.textContent = 'Offline';
+      badge.title = 'Offline: Local cached questions & study tools are active';
+      showToast('info', 'Working in Offline Mode. Local study questions and tools are available.');
+    }
+  }
+  window.addEventListener('online', updateNetworkStatus);
+  window.addEventListener('offline', updateNetworkStatus);
+  updateNetworkStatus();
+
+  // 3. PWA Install Prompt Listener
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPWAInstallPrompt = e;
+    var btn = document.getElementById('pwaInstallBtn');
+    if (btn) btn.style.display = 'inline-flex';
+  });
 
   dbOnAuthChange(function(event, session) {
     currentUser = session?.user || null;
@@ -71,6 +119,17 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 
   currentUser = await dbGetCurrentUser();
+
+  // Check guest mode fallback for offline study
+  var isGuest = localStorage.getItem('nifes_guest_mode') === 'true';
+  if (!currentUser && isGuest) {
+    currentUser = {
+      id: 'guest-local',
+      email: 'guest@student.local',
+      user_metadata: { full_name: 'Guest Scholar' }
+    };
+  }
+
   updateAuthUI();
   initTheme();
 
@@ -117,6 +176,7 @@ function navigate(view) {
 
   if (view === 'dashboard') renderDashboard();
   if (view === 'practice') initPracticeView();
+  if (view === 'pomodoro') initPomodoroView();
   if (view === 'calculator') initCalculatorView();
   if (view === 'cgpa') initCGPAView();
   if (view === 'materials') renderMaterialsView();
@@ -181,6 +241,7 @@ function toggleUserMenu() {
 }
 
 async function handleSignOut() {
+  localStorage.removeItem('nifes_guest_mode');
   await dbSignOut();
   currentUser = null;
   currentUserRole = 'user';
@@ -1096,8 +1157,32 @@ async function handleUploadMaterial(e) {
   }
 }
 
-/* ─── Practice Test ───────────────────────────────── */
+/* ─── Practice Test & CBT Engine ─────────────────── */
+function formatTime(secs) {
+  var m = Math.floor(secs / 60);
+  var s = secs % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function setQuizMode(mode) {
+  quizMode = mode;
+  var input = document.getElementById('quizModeInput');
+  if (input) input.value = mode;
+
+  var cardExam = document.getElementById('modeCardExam');
+  var cardPractice = document.getElementById('modeCardPractice');
+  if (cardExam) cardExam.classList.toggle('active', mode === 'exam');
+  if (cardPractice) cardPractice.classList.toggle('active', mode === 'practice');
+
+  var durGroup = document.getElementById('quizDurationGroup');
+  if (durGroup) {
+    durGroup.style.opacity = mode === 'exam' ? '1' : '0.4';
+    durGroup.style.pointerEvents = mode === 'exam' ? 'auto' : 'none';
+  }
+}
+
 function initPracticeView() {
+  if (quizTimerId) { clearInterval(quizTimerId); quizTimerId = null; }
   quizActive = false;
   var setup = document.getElementById('quizSetup');
   var engine = document.getElementById('quizEngine');
@@ -1107,6 +1192,7 @@ function initPracticeView() {
   if (results) results.style.display = 'none';
   populateQuizFilters();
   loadMatricNumber();
+  renderQuizHistory();
 }
 
 function loadMatricNumber() {
@@ -1117,9 +1203,9 @@ function loadMatricNumber() {
 
 function populateQuizFilters() {
   var lSel = document.getElementById('quizLevel');
-  lSel.innerHTML = '<option value="">Select Level</option><option value="100">100 Level</option><option value="200">200 Level</option><option value="300">300 Level</option>';
+  if (lSel) lSel.innerHTML = '<option value="">Select Level</option><option value="100">100 Level</option><option value="200">200 Level</option><option value="300">300 Level</option>';
   var cSel = document.getElementById('quizCourse');
-  cSel.innerHTML = '<option value="">All Courses</option>';
+  if (cSel) cSel.innerHTML = '<option value="">All Courses</option>';
 }
 
 function onQuizLevelChange() {
@@ -1136,6 +1222,8 @@ function startQuiz() {
   var qCount = document.querySelector('input[name="quizCount"]:checked')?.value || '10';
   var qType = document.getElementById('quizType').value;
   var matric = document.getElementById('quizMatric').value.trim();
+  quizMode = document.getElementById('quizModeInput')?.value || 'exam';
+  quizDurationMins = parseInt(document.getElementById('quizDuration')?.value || '15', 10);
 
   if (!level) { showToast('error', 'Please select a level.'); return; }
   if (matric) localStorage.setItem('nifes_matric', matric);
@@ -1144,45 +1232,134 @@ function startQuiz() {
   if (course) pool = pool.filter(function(q) { return q.course === course; });
   if (qType) pool = pool.filter(function(q) { return q.type === qType; });
 
-  if (!pool.length) { showToast('error', 'No questions available.'); return; }
+  if (!pool.length) { showToast('error', 'No questions available for selected filters.'); return; }
 
   pool = shuffleArray(pool);
   var count = qCount === 'all' ? pool.length : Math.min(parseInt(qCount), pool.length);
   quizQuestions = pool.slice(0, count);
-  quizIndex = 0; quizScore = 0; quizMissed = []; quizSelectedOption = '';
-  quizTotal = quizQuestions.length; quizActive = true;
+  quizTotal = quizQuestions.length;
+  quizIndex = 0;
+  quizScore = 0;
+  quizMissed = [];
+  quizSelectedOption = '';
+  quizUserAnswers = new Array(quizTotal).fill(null);
+  quizFlagged = new Array(quizTotal).fill(false);
+  quizActive = true;
+  quizStartTime = Date.now();
 
   document.getElementById('quizSetup').style.display = 'none';
   document.getElementById('quizEngine').style.display = 'block';
   document.getElementById('quizResults').style.display = 'none';
+
+  // Countdown timer for Timed CBT
+  var timerPill = document.getElementById('cbtTimerPill');
+  if (quizMode === 'exam' && quizDurationMins > 0) {
+    quizTimeLeft = quizDurationMins * 60;
+    if (timerPill) timerPill.style.display = 'inline-flex';
+    updateTimerDisplay();
+    if (quizTimerId) clearInterval(quizTimerId);
+    quizTimerId = setInterval(function() {
+      if (quizTimeLeft > 0) {
+        quizTimeLeft--;
+        updateTimerDisplay();
+      } else {
+        clearInterval(quizTimerId);
+        quizTimerId = null;
+        showToast('error', 'Time is up! Automatically submitting your test...');
+        submitCbtExam(true);
+      }
+    }, 1000);
+  } else {
+    if (timerPill) timerPill.style.display = 'none';
+  }
+
   showQuizQuestion();
+  renderCbtPalette();
+}
+
+function updateTimerDisplay() {
+  var display = document.getElementById('cbtTimerDisplay');
+  var pill = document.getElementById('cbtTimerPill');
+  if (!display || !pill) return;
+  display.textContent = formatTime(quizTimeLeft);
+
+  pill.classList.remove('cbt-timer-warning', 'cbt-timer-danger');
+  if (quizTimeLeft <= 30) {
+    pill.classList.add('cbt-timer-danger');
+  } else if (quizTimeLeft <= 120) {
+    pill.classList.add('cbt-timer-warning');
+  }
 }
 
 function showQuizQuestion() {
-  if (quizIndex >= quizTotal) { showQuizResults(); return; }
+  if (quizIndex >= quizTotal) {
+    if (quizMode === 'exam') {
+      openCbtSubmitModal();
+      return;
+    } else {
+      showQuizResults(false);
+      return;
+    }
+  }
+
   var q = quizQuestions[quizIndex];
 
   document.getElementById('quizProgress').textContent = 'Question ' + (quizIndex + 1) + ' of ' + quizTotal;
-  document.getElementById('quizProgressFill').style.width = ((quizIndex / quizTotal) * 100) + '%';
+  document.getElementById('quizProgressFill').style.width = (((quizIndex + 1) / quizTotal) * 100) + '%';
   document.getElementById('quizQuestionNum').textContent = 'Question ' + (quizIndex + 1);
   document.getElementById('quizLevelBadge').textContent = q.level + 'L · ' + sanitize(q.course);
   document.getElementById('quizQuestionText').innerHTML = sanitize(q.question);
 
-  var ansSection = document.getElementById('quizAnswerSection');
-  ansSection.classList.remove('show');
-  document.getElementById('quizShowBtn').style.display = '';
-  document.getElementById('quizGotIt').style.display = 'none';
-  document.getElementById('quizMissedIt').style.display = 'none';
+  var typeBadge = document.getElementById('quizTypeBadge');
+  if (typeBadge) typeBadge.textContent = q.type || 'Question';
 
-  // Render MCQ options as clickable cards
+  var isFlagged = !!quizFlagged[quizIndex];
+  var flagBtn = document.getElementById('quizFlagBtn');
+  var flagText = document.getElementById('quizFlagText');
+  var cardFlagBadge = document.getElementById('quizCardFlagged');
+  if (flagBtn) flagBtn.classList.toggle('active', isFlagged);
+  if (flagText) flagText.textContent = isFlagged ? 'Flagged ⚑' : 'Flag';
+  if (cardFlagBadge) cardFlagBadge.style.display = isFlagged ? 'inline-flex' : 'none';
+
+  var prevBtn = document.getElementById('quizPrevBtn');
+  var nextBtn = document.getElementById('quizNextBtn');
+  if (prevBtn) prevBtn.disabled = (quizIndex === 0);
+  if (nextBtn) {
+    if (quizIndex === quizTotal - 1) {
+      nextBtn.innerHTML = 'Review & Submit <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else {
+      nextBtn.innerHTML = 'Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
+    }
+  }
+
+  var ansSection = document.getElementById('quizAnswerSection');
+  var showBtn = document.getElementById('quizShowBtn');
+  var paletteCard = document.getElementById('cbtPaletteCard');
+
+  if (quizMode === 'exam') {
+    if (ansSection) ansSection.classList.remove('show');
+    if (showBtn) showBtn.style.display = 'none';
+    if (paletteCard) paletteCard.style.display = 'block';
+  } else {
+    if (ansSection) ansSection.classList.remove('show');
+    if (showBtn) showBtn.style.display = '';
+    document.getElementById('quizGotIt').style.display = 'none';
+    document.getElementById('quizMissedIt').style.display = 'none';
+    if (paletteCard) paletteCard.style.display = 'block';
+  }
+
+  // Render options
   var optsEl = document.getElementById('quizOptions');
   var parsed = extractMCQ(q);
+  var currentSelected = quizUserAnswers[quizIndex] || '';
+
   if (parsed) {
     optsEl.style.display = 'flex';
     var labels = ['A', 'B', 'C', 'D'];
     optsEl.innerHTML = labels.map(function(l) {
-      return '<div class="quiz-option" data-opt="' + l + '" onclick="selectQuizOption(this,\'' + l + '\')">' +
-        '<input type="radio" name="qopt" id="qopt-' + l + '" style="display:none">' +
+      var isSelected = (currentSelected === l);
+      return '<div class="quiz-option' + (isSelected ? ' selected' : '') + '" data-opt="' + l + '" onclick="selectQuizOption(this,\'' + l + '\')">' +
+        '<input type="radio" name="qopt" id="qopt-' + l + '" style="display:none"' + (isSelected ? ' checked' : '') + '>' +
         '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--radius-sm);background:var(--color-surface-dynamic);font-weight:600;font-size:var(--text-xs);flex-shrink:0">' + l + '</span>' +
         '<span>' + sanitize(parsed.options[l] || '') + '</span></div>';
     }).join('');
@@ -1190,8 +1367,10 @@ function showQuizQuestion() {
     optsEl.style.display = 'none';
   }
 
-  var ansText = q.answer ? (parsed ? (parsed.correct ? 'Answer: ' + parsed.correct : 'Correct answer not provided yet.') : sanitize(q.answer).replace(/\n/g, '<br>')) : 'Answer not provided yet.';
+  var ansText = q.answer ? (parsed ? (parsed.correct ? 'Correct Answer: <strong>' + parsed.correct + '</strong>' : 'Solution not provided yet.') : sanitize(q.answer).replace(/\n/g, '<br>')) : 'Solution not provided yet.';
   document.getElementById('quizAnswerBox').innerHTML = ansText;
+
+  renderCbtPalette();
 }
 
 function selectQuizOption(el, label) {
@@ -1199,7 +1378,127 @@ function selectQuizOption(el, label) {
   var all = parent.querySelectorAll('.quiz-option');
   all.forEach(function(o) { o.classList.remove('selected'); });
   el.classList.add('selected');
+  
+  quizUserAnswers[quizIndex] = label;
   quizSelectedOption = label;
+  renderCbtPalette();
+}
+
+function toggleQuizFlag() {
+  quizFlagged[quizIndex] = !quizFlagged[quizIndex];
+  var isFlagged = quizFlagged[quizIndex];
+  var flagBtn = document.getElementById('quizFlagBtn');
+  var flagText = document.getElementById('quizFlagText');
+  var cardFlagBadge = document.getElementById('quizCardFlagged');
+  if (flagBtn) flagBtn.classList.toggle('active', isFlagged);
+  if (flagText) flagText.textContent = isFlagged ? 'Flagged ⚑' : 'Flag';
+  if (cardFlagBadge) cardFlagBadge.style.display = isFlagged ? 'inline-flex' : 'none';
+  renderCbtPalette();
+}
+
+function quizPrev() {
+  if (quizIndex > 0) {
+    quizIndex--;
+    showQuizQuestion();
+  }
+}
+
+function quizNext() {
+  if (quizIndex < quizTotal - 1) {
+    quizIndex++;
+    showQuizQuestion();
+  } else {
+    if (quizMode === 'exam') {
+      openCbtSubmitModal();
+    } else {
+      showQuizResults(false);
+    }
+  }
+}
+
+function jumpToQuizQuestion(idx) {
+  if (idx >= 0 && idx < quizTotal) {
+    quizIndex = idx;
+    showQuizQuestion();
+  }
+}
+
+function renderCbtPalette() {
+  var grid = document.getElementById('cbtPaletteGrid');
+  if (!grid) return;
+  grid.innerHTML = quizQuestions.map(function(q, i) {
+    var isCurrent = (i === quizIndex);
+    var isAnswered = (quizUserAnswers[i] !== null && quizUserAnswers[i] !== undefined);
+    var isFlagged = !!quizFlagged[i];
+    
+    var cls = 'cbt-palette-btn';
+    if (isCurrent) cls += ' current';
+    if (isAnswered) cls += ' answered';
+    if (isFlagged) cls += ' flagged';
+
+    return '<button type="button" class="' + cls + '" onclick="jumpToQuizQuestion(' + i + ')" title="Question ' + (i + 1) + '">' +
+      (i + 1) + '</button>';
+  }).join('');
+}
+
+function openCbtSubmitModal() {
+  var answeredCount = quizUserAnswers.filter(function(a) { return a !== null; }).length;
+  var unansweredCount = quizTotal - answeredCount;
+  var flaggedCount = quizFlagged.filter(Boolean).length;
+
+  document.getElementById('modalTotalQ').textContent = quizTotal;
+  document.getElementById('modalAnsweredQ').textContent = answeredCount;
+  document.getElementById('modalUnansweredQ').textContent = unansweredCount;
+  document.getElementById('modalFlaggedQ').textContent = flaggedCount;
+
+  document.getElementById('cbtSubmitModal').classList.remove('hidden');
+}
+
+function closeCbtSubmitModal() {
+  document.getElementById('cbtSubmitModal').classList.add('hidden');
+}
+
+function confirmCbtSubmit() {
+  closeCbtSubmitModal();
+  submitCbtExam(false);
+}
+
+function submitCbtExam(autoSubmitted) {
+  if (quizTimerId) {
+    clearInterval(quizTimerId);
+    quizTimerId = null;
+  }
+  quizEndTime = Date.now();
+  quizActive = false;
+
+  quizScore = 0;
+  quizMissed = [];
+
+  quizQuestions.forEach(function(q, i) {
+    var parsed = extractMCQ(q);
+    var userAns = quizUserAnswers[i];
+    var isCorrect = false;
+
+    if (parsed && parsed.correct) {
+      if (userAns === parsed.correct) {
+        isCorrect = true;
+      }
+    }
+
+    if (isCorrect) {
+      quizScore++;
+    } else {
+      quizMissed.push({
+        question: q,
+        index: i,
+        userAnswer: userAns,
+        correctAnswer: parsed?.correct || q.answer || '',
+        flagged: !!quizFlagged[i]
+      });
+    }
+  });
+
+  showQuizResults(autoSubmitted);
 }
 
 function showQuizAnswer() {
@@ -1209,7 +1508,6 @@ function showQuizAnswer() {
   document.getElementById('quizGotIt').style.display = '';
   document.getElementById('quizMissedIt').style.display = '';
 
-  // Highlight correct/wrong for MCQ
   var parsed = extractMCQ(quizQuestions[quizIndex]);
   if (parsed) {
     var optsEl = document.getElementById('quizOptions');
@@ -1222,29 +1520,49 @@ function showQuizAnswer() {
   }
 }
 
-function quizGotIt() { quizScore++; quizIndex++; showQuizQuestion(); }
-function quizMissedIt() { quizMissed.push(quizQuestions[quizIndex]); quizIndex++; showQuizQuestion(); }
+function quizGotIt() {
+  quizScore++;
+  quizIndex++;
+  showQuizQuestion();
+}
 
-function showQuizResults() {
+function quizMissedIt() {
+  quizMissed.push({
+    question: quizQuestions[quizIndex],
+    index: quizIndex,
+    userAnswer: quizSelectedOption || 'None',
+    correctAnswer: quizQuestions[quizIndex].answer || '',
+    flagged: !!quizFlagged[quizIndex]
+  });
+  quizIndex++;
+  showQuizQuestion();
+}
+
+function showQuizResults(autoSubmitted) {
   quizActive = false;
+  if (quizTimerId) { clearInterval(quizTimerId); quizTimerId = null; }
   document.getElementById('quizEngine').style.display = 'none';
   document.getElementById('quizResults').style.display = 'block';
 
   var pct = Math.round((quizScore / quizTotal) * 100);
   var wrong = quizTotal - quizScore;
+  var durationSecs = Math.max(1, Math.round(((quizEndTime || Date.now()) - (quizStartTime || Date.now())) / 1000));
+  var paceSecs = Math.round(durationSecs / (quizTotal || 1));
 
   document.getElementById('resultScore').textContent = quizScore + ' / ' + quizTotal;
-  document.getElementById('resultCorrect').textContent = quizScore;
-  document.getElementById('resultWrong').textContent = wrong;
+  document.getElementById('resCorrectCount').textContent = quizScore;
+  document.getElementById('resWrongCount').textContent = wrong;
+  document.getElementById('resTimeSpent').textContent = formatTime(durationSecs);
+  document.getElementById('resPace').textContent = paceSecs + 's / Q';
 
   var iconEl = document.getElementById('resultIcon');
   var labelEl = document.getElementById('resultLabel');
-  if (pct === 100) { iconEl.textContent = '🏆'; labelEl.textContent = 'Perfect score! Excellent work!'; }
-  else if (pct >= 80) { iconEl.textContent = '🎉'; labelEl.textContent = 'Outstanding! Almost perfect.'; }
-  else if (pct >= 70) { iconEl.textContent = '👏'; labelEl.textContent = 'Great job! Keep it up.'; }
-  else if (pct >= 50) { iconEl.textContent = '👍'; labelEl.textContent = 'Good effort! Review the ones you missed.'; }
-  else if (pct >= 30) { iconEl.textContent = '💪'; labelEl.textContent = 'Keep practicing! You\'ll improve.'; }
-  else { iconEl.textContent = '📚'; labelEl.textContent = 'Time to hit the books! Try again.'; }
+  if (pct === 100) { iconEl.textContent = '🏆'; labelEl.textContent = 'Flawless Victory! Perfect CBT Score!'; }
+  else if (pct >= 80) { iconEl.textContent = '🎉'; labelEl.textContent = 'Outstanding! Distinction standard.'; }
+  else if (pct >= 70) { iconEl.textContent = '👏'; labelEl.textContent = 'Great performance! Solid understanding.'; }
+  else if (pct >= 50) { iconEl.textContent = '👍'; labelEl.textContent = 'Good effort! Review the missed questions below.'; }
+  else if (pct >= 30) { iconEl.textContent = '💪'; labelEl.textContent = 'Keep practicing! Steady repetition brings mastery.'; }
+  else { iconEl.textContent = '📚'; labelEl.textContent = 'Time to review the lecture notes and try again!'; }
 
   var pctEl = document.getElementById('resultPct');
   pctEl.textContent = pct + '%';
@@ -1255,42 +1573,166 @@ function showQuizResults() {
   var fillClass = pct >= 70 ? 'good' : pct >= 50 ? 'ok' : 'bad';
   fillEl.className = 'quiz-result-fill ' + fillClass;
 
-  var missedContainer = document.getElementById('resultMissed');
-  if (quizMissed.length) {
-    missedContainer.innerHTML = '<div class="quiz-missed-heading">Missed Questions (' + quizMissed.length + ')</div>' +
-      quizMissed.map(function(q, i) {
-        var renderedAns = renderMCQOptions(q) || sanitize(q.answer).replace(/\n/g, '<br>');
-        return '<div class="quiz-missed-item"><p><strong>' + (i + 1) + '.</strong> ' + sanitize(q.question) + '</p>' +
-          '<div class="quiz-missed-answer"><strong>Answer:</strong> ' + renderedAns + '</div></div>';
-      }).join('');
-  } else {
-    missedContainer.innerHTML = '<p style="color:var(--color-success);font-size:var(--text-base);text-align:center;padding:var(--space-4)">Perfect score! No missed questions.</p>';
-  }
+  // Update Review Filter Counters
+  var flaggedCount = quizFlagged.filter(Boolean).length;
+  document.getElementById('countReviewAll').textContent = quizTotal;
+  document.getElementById('countReviewCorrect').textContent = quizScore;
+  document.getElementById('countReviewMissed').textContent = quizMissed.length;
+  document.getElementById('countReviewFlagged').textContent = flaggedCount;
+
+  currentReviewFilter = 'all';
+  renderCbtReviewList();
 
   document.getElementById('resultRetryBtn').style.display = quizMissed.length ? '' : 'none';
 
+  // Save Mock CBT Session to DB
   dbSaveQuizSession({
     matric_number: localStorage.getItem('nifes_matric') || '',
     level: quizQuestions[0]?.level || '',
     course: quizQuestions[0]?.course || '',
-    question_type: '',
+    question_type: quizMode === 'exam' ? 'Timed CBT' : 'Practice',
     score: quizScore,
     total: quizTotal,
-    missed_data: quizMissed,
+    missed_data: quizMissed.map(function(m) { return m.question || m; })
   });
+}
+
+function filterCbtReview(filterType, btn) {
+  currentReviewFilter = filterType;
+  var allBtns = document.querySelectorAll('.cbt-review-filter-tabs .tab-btn');
+  allBtns.forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  renderCbtReviewList();
+}
+
+function renderCbtReviewList() {
+  var container = document.getElementById('resultMissed');
+  if (!container) return;
+
+  var itemsToRender = [];
+
+  quizQuestions.forEach(function(q, idx) {
+    var parsed = extractMCQ(q);
+    var userChoice = quizUserAnswers[idx];
+    var isCorrect = (parsed && parsed.correct && userChoice === parsed.correct);
+    var isFlagged = !!quizFlagged[idx];
+
+    var match = false;
+    if (currentReviewFilter === 'all') match = true;
+    else if (currentReviewFilter === 'correct' && isCorrect) match = true;
+    else if (currentReviewFilter === 'missed' && !isCorrect) match = true;
+    else if (currentReviewFilter === 'flagged' && isFlagged) match = true;
+
+    if (match) {
+      itemsToRender.push({
+        question: q,
+        index: idx,
+        userChoice: userChoice,
+        parsed: parsed,
+        isCorrect: isCorrect,
+        isFlagged: isFlagged
+      });
+    }
+  });
+
+  if (!itemsToRender.length) {
+    container.innerHTML = '<p style="color:var(--color-text-muted);text-align:center;padding:var(--space-6)">No questions match this filter.</p>';
+    return;
+  }
+
+  container.innerHTML = itemsToRender.map(function(item) {
+    var q = item.question;
+    var statusClass = item.isCorrect ? 'correct' : (item.userChoice ? 'wrong' : 'skipped');
+    var statusLabel = item.isCorrect ? '✓ Correct' : (item.userChoice ? '✕ Incorrect' : '○ Skipped');
+    var flagBadge = item.isFlagged ? '<span class="flag-badge">⚑ Flagged</span>' : '';
+    
+    var renderedOptions = renderMCQOptions(q) || sanitize(q.answer).replace(/\n/g, '<br>');
+    var userChoiceDisplay = item.userChoice ? '<strong>Option ' + item.userChoice + '</strong>' : '<span style="color:var(--color-text-muted)">No answer selected</span>';
+
+    return '<div class="review-item-card">' +
+      '<div class="review-item-header">' +
+        '<span style="font-weight:700;font-size:var(--text-sm)">Question ' + (item.index + 1) + ' · ' + q.level + 'L ' + sanitize(q.course) + '</span>' +
+        '<div style="display:flex;align-items:center;gap:var(--space-2)">' +
+          flagBadge +
+          '<span class="review-status-tag ' + statusClass + '">' + statusLabel + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<p style="margin-bottom:var(--space-3);color:var(--color-text);font-size:var(--text-sm);line-height:1.6">' + sanitize(q.question) + '</p>' +
+      '<div style="font-size:var(--text-xs);margin-bottom:var(--space-2);color:var(--color-text-muted)">Your Answer: ' + userChoiceDisplay + '</div>' +
+      '<div style="background:var(--color-surface-offset);border-left:3px solid var(--color-primary);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);font-size:var(--text-xs);line-height:1.6">' +
+        renderedOptions +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
 function retryMissed() {
   if (!quizMissed.length) return;
-  quizQuestions = shuffleArray([].concat(quizMissed));
-  quizIndex = 0; quizScore = 0; quizMissed = [];
-  quizTotal = quizQuestions.length; quizActive = true;
+  quizQuestions = shuffleArray(quizMissed.map(function(m) { return m.question || m; }));
+  quizTotal = quizQuestions.length;
+  quizIndex = 0;
+  quizScore = 0;
+  quizMissed = [];
+  quizSelectedOption = '';
+  quizUserAnswers = new Array(quizTotal).fill(null);
+  quizFlagged = new Array(quizTotal).fill(false);
+  quizActive = true;
+  quizStartTime = Date.now();
+
   document.getElementById('quizResults').style.display = 'none';
   document.getElementById('quizEngine').style.display = 'block';
+
+  var timerPill = document.getElementById('cbtTimerPill');
+  if (quizMode === 'exam' && quizDurationMins > 0) {
+    quizTimeLeft = Math.ceil(quizDurationMins * (quizTotal / 10)) * 60;
+    if (timerPill) timerPill.style.display = 'inline-flex';
+    updateTimerDisplay();
+    if (quizTimerId) clearInterval(quizTimerId);
+    quizTimerId = setInterval(function() {
+      if (quizTimeLeft > 0) {
+        quizTimeLeft--;
+        updateTimerDisplay();
+      } else {
+        clearInterval(quizTimerId);
+        quizTimerId = null;
+        showToast('error', 'Time is up! Submitting your retry exam...');
+        submitCbtExam(true);
+      }
+    }, 1000);
+  }
+
   showQuizQuestion();
+  renderCbtPalette();
 }
 
-function newTest() { initPracticeView(); }
+function newTest() {
+  initPracticeView();
+}
+
+function continueAsGuest() {
+  localStorage.setItem('nifes_guest_mode', 'true');
+  currentUser = {
+    id: 'guest-' + Date.now(),
+    email: 'guest@student.local',
+    user_metadata: { full_name: 'Guest Scholar' }
+  };
+  currentUserRole = 'user';
+  hideAuthPage();
+  showToast('success', 'Welcome to NIFES Study Hub! (Offline / Guest Mode)');
+}
+
+function installPWA() {
+  if (!deferredPWAInstallPrompt) return;
+  deferredPWAInstallPrompt.prompt();
+  deferredPWAInstallPrompt.userChoice.then(function(res) {
+    if (res.outcome === 'accepted') {
+      showToast('success', 'NIFES Study Hub has been installed to your device!');
+    }
+    deferredPWAInstallPrompt = null;
+    var btn = document.getElementById('pwaInstallBtn');
+    if (btn) btn.style.display = 'none';
+  });
+}
 
 function shuffleArray(arr) {
   var a = [].concat(arr);
@@ -1393,8 +1835,7 @@ function showToast(type, message) {
 /* ─── Theme ───────────────────────────────────────── */
 function initTheme() {
   var saved = localStorage.getItem('nifes_theme');
-  var prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
-  var theme = saved || (prefersDark ? 'dark' : 'light');
+  var theme = saved || 'light';
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeIcon(theme);
 }

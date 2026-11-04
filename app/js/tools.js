@@ -155,3 +155,236 @@ function calculateOverallCGPA() {
       '</div>' +
     '</div>';
 }
+
+
+/* ─── Pomodoro Study Timer ─────────────────────── */
+var POMODORO_DEFAULTS = { work: 25, shortBreak: 5, longBreak: 15 };
+var pomodoroSettings = JSON.parse(localStorage.getItem('nifes_pomodoro_settings') || 'null') || POMODORO_DEFAULTS;
+var pomodoroMode = 'work'; // 'work' | 'shortBreak' | 'longBreak'
+var pomodoroTimeLeft = pomodoroSettings.work * 60;
+var pomodoroTotalTime = pomodoroSettings.work * 60;
+var pomodoroTimer = null;
+var pomodoroIsRunning = false;
+var pomodoroSessionsToday = parseInt(localStorage.getItem('nifes_pomodoro_sessions_' + new Date().toDateString()) || '0', 10);
+var pomodoroCurrentTask = localStorage.getItem('nifes_pomodoro_task') || '';
+
+function playPomodoroChime() {
+  try {
+    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    var ctx = new AudioCtx();
+    var now = ctx.currentTime;
+    
+    // Smooth pleasant study bell chime (Chord: C5 + G5 + C6)
+    var freqs = [523.25, 659.25, 783.99, 1046.50];
+    freqs.forEach(function(f, idx) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, now + (idx * 0.08));
+      
+      gain.gain.setValueAtTime(0.001, now + (idx * 0.08));
+      gain.gain.exponentialRampToValueAtTime(0.2, now + (idx * 0.08) + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + (idx * 0.08) + 1.2);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + (idx * 0.08));
+      osc.stop(now + (idx * 0.08) + 1.25);
+    });
+  } catch (e) {
+    console.log('Audio chime not available or blocked:', e);
+  }
+}
+
+function initPomodoroView() {
+  updatePomodoroDisplay();
+  updatePomodoroStats();
+  var taskInput = document.getElementById('pomodoroTaskInput');
+  if (taskInput) taskInput.value = pomodoroCurrentTask;
+}
+
+function setPomodoroMode(mode) {
+  if (pomodoroIsRunning) pausePomodoro();
+  pomodoroMode = mode;
+  var mins = pomodoroSettings[mode] || 25;
+  pomodoroTimeLeft = mins * 60;
+  pomodoroTotalTime = mins * 60;
+  
+  // Update mode tabs
+  var tabs = document.querySelectorAll('.pomodoro-mode-btn');
+  tabs.forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
+  });
+
+  updatePomodoroDisplay();
+}
+
+function togglePomodoro() {
+  if (pomodoroIsRunning) {
+    pausePomodoro();
+  } else {
+    startPomodoro();
+  }
+}
+
+function startPomodoro() {
+  if (pomodoroIsRunning) return;
+  pomodoroIsRunning = true;
+  updatePomodoroPlayButton();
+  
+  pomodoroTimer = setInterval(function() {
+    if (pomodoroTimeLeft > 0) {
+      pomodoroTimeLeft--;
+      updatePomodoroDisplay();
+    } else {
+      clearInterval(pomodoroTimer);
+      pomodoroIsRunning = false;
+      playPomodoroChime();
+      
+      if (pomodoroMode === 'work') {
+        pomodoroSessionsToday++;
+        localStorage.setItem('nifes_pomodoro_sessions_' + new Date().toDateString(), String(pomodoroSessionsToday));
+        showToast('success', 'Great focus session! Time for a well-deserved break.');
+        // Next: if every 4 sessions, offer long break, else short break
+        if (pomodoroSessionsToday % 4 === 0) {
+          setPomodoroMode('longBreak');
+        } else {
+          setPomodoroMode('shortBreak');
+        }
+      } else {
+        showToast('info', 'Break finished! Ready for the next focus sprint?');
+        setPomodoroMode('work');
+      }
+      updatePomodoroPlayButton();
+      updatePomodoroStats();
+    }
+  }, 1000);
+}
+
+function pausePomodoro() {
+  if (!pomodoroIsRunning) return;
+  clearInterval(pomodoroTimer);
+  pomodoroIsRunning = false;
+  updatePomodoroPlayButton();
+  updatePomodoroMiniPill();
+}
+
+function resetPomodoro() {
+  pausePomodoro();
+  var mins = pomodoroSettings[pomodoroMode] || 25;
+  pomodoroTimeLeft = mins * 60;
+  pomodoroTotalTime = mins * 60;
+  updatePomodoroDisplay();
+}
+
+function skipPomodoro() {
+  pausePomodoro();
+  if (pomodoroMode === 'work') {
+    setPomodoroMode('shortBreak');
+  } else {
+    setPomodoroMode('work');
+  }
+}
+
+function formatPomodoroTime(seconds) {
+  var m = Math.floor(seconds / 60);
+  var s = seconds % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function updatePomodoroDisplay() {
+  var timeStr = formatPomodoroTime(pomodoroTimeLeft);
+  var timeEl = document.getElementById('pomodoroTime');
+  if (timeEl) timeEl.textContent = timeStr;
+
+  // SVG Circular progress
+  var ring = document.getElementById('pomodoroProgressRing');
+  if (ring) {
+    var radius = 130;
+    var circumference = 2 * Math.PI * radius;
+    ring.style.strokeDasharray = circumference;
+    var fraction = pomodoroTotalTime > 0 ? (pomodoroTimeLeft / pomodoroTotalTime) : 0;
+    ring.style.strokeDashoffset = circumference * (1 - fraction);
+  }
+
+  // Update Mini Header Pill
+  updatePomodoroMiniPill();
+
+  // Page title indicator when running
+  if (pomodoroIsRunning) {
+    document.title = '(' + timeStr + ') NIFES Study Hub';
+  } else {
+    document.title = 'NIFES Study Hub';
+  }
+}
+
+function updatePomodoroPlayButton() {
+  var btn = document.getElementById('pomodoroToggleBtn');
+  if (!btn) return;
+  if (pomodoroIsRunning) {
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+  } else {
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start Focus';
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-primary');
+  }
+}
+
+function updatePomodoroMiniPill() {
+  var pill = document.getElementById('pomodoroMiniPill');
+  if (!pill) return;
+  
+  // Show pill if timer is running or paused mid-session
+  var isMidSession = pomodoroTimeLeft < pomodoroTotalTime;
+  if (pomodoroIsRunning || isMidSession) {
+    pill.style.display = 'inline-flex';
+    var icon = pomodoroMode === 'work' ? '🍅' : '☕';
+    var textEl = pill.querySelector('.pill-time');
+    if (textEl) textEl.textContent = icon + ' ' + formatPomodoroTime(pomodoroTimeLeft);
+    pill.classList.toggle('running', pomodoroIsRunning);
+  } else {
+    pill.style.display = 'none';
+  }
+}
+
+function updatePomodoroStats() {
+  var countEl = document.getElementById('pomodoroSessionCount');
+  if (countEl) countEl.textContent = pomodoroSessionsToday;
+  var totalMinsEl = document.getElementById('pomodoroTotalMinutes');
+  if (totalMinsEl) totalMinsEl.textContent = (pomodoroSessionsToday * (pomodoroSettings.work || 25)) + ' mins';
+}
+
+function handlePomodoroTaskChange(val) {
+  pomodoroCurrentTask = val;
+  localStorage.setItem('nifes_pomodoro_task', val);
+}
+
+function openPomodoroSettings() {
+  var modal = document.getElementById('pomodoroSettingsModal');
+  if (!modal) return;
+  document.getElementById('pomSetWork').value = pomodoroSettings.work || 25;
+  document.getElementById('pomSetShort').value = pomodoroSettings.shortBreak || 5;
+  document.getElementById('pomSetLong').value = pomodoroSettings.longBreak || 15;
+  modal.classList.remove('hidden');
+}
+
+function closePomodoroSettings() {
+  var modal = document.getElementById('pomodoroSettingsModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function savePomodoroSettings(e) {
+  if (e) e.preventDefault();
+  var w = Math.max(1, parseInt(document.getElementById('pomSetWork').value) || 25);
+  var sb = Math.max(1, parseInt(document.getElementById('pomSetShort').value) || 5);
+  var lb = Math.max(1, parseInt(document.getElementById('pomSetLong').value) || 15);
+  
+  pomodoroSettings = { work: w, shortBreak: sb, longBreak: lb };
+  localStorage.setItem('nifes_pomodoro_settings', JSON.stringify(pomodoroSettings));
+  closePomodoroSettings();
+  showToast('success', 'Pomodoro settings saved!');
+  resetPomodoro();
+}
