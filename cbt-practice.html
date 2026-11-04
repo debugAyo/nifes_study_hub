@@ -19,6 +19,7 @@
 .sample-option:hover{border-color:var(--color-primary);background:var(--color-surface)}
 .sample-option.selected{border-color:var(--color-primary);background:var(--color-primary-light);font-weight:700}
 .opt-label{width:28px;height:28px;border-radius:50%;background:var(--color-surface);border:1px solid var(--color-border);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0}
+@media(max-width:640px){.sample-cbt{padding:20px 16px}.sample-cbt-header h3{font-size:1.05rem}}
 </style>
 </head>
 <body>
@@ -47,6 +48,23 @@
       <div class="nav-actions">
         <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
         <a href="/app/index.html" class="btn btn-primary">Launch CBT App</a>
+        <button class="nav-toggle" id="navToggle" onclick="toggleMobileNav()" aria-label="Toggle navigation menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile Navigation Drawer -->
+    <div class="nav-mobile" id="navMobile">
+      <a href="/index.html" class="nav-mobile-link">Home</a>
+      <a href="/courses.html" class="nav-mobile-link">Courses & Past Questions</a>
+      <a href="/cbt-practice.html" class="nav-mobile-link active">CBT Simulator</a>
+      <a href="/cgpa-calculator.html" class="nav-mobile-link">5.0 CGPA Calculator</a>
+      <a href="/about.html" class="nav-mobile-link">About NIFES</a>
+      <div class="nav-mobile-actions">
+        <a href="/app/index.html#signin" class="btn btn-secondary" style="width:100%">Sign In</a>
+        <a href="/app/index.html#signup" class="btn btn-primary" style="width:100%">Sign Up Free</a>
       </div>
     </div>
   </div>
@@ -216,6 +234,15 @@ function toggleTheme() {
   html.setAttribute('data-theme', next);
   localStorage.setItem('nifes_theme', next);
   updateThemeUI(next);
+}
+
+function toggleMobileNav() {
+  var toggle = document.getElementById('navToggle');
+  var mobile = document.getElementById('navMobile');
+  if (toggle && mobile) {
+    toggle.classList.toggle('open');
+    mobile.classList.toggle('open');
+  }
 }
 </script>
 </body>

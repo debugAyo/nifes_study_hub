@@ -113,6 +113,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (btn) btn.style.display = 'inline-flex';
   });
 
+  // Security & state hygiene: purge any legacy guest mode flag from previous versions
+  localStorage.removeItem('nifes_guest_mode');
+
   dbOnAuthChange(function(event, session) {
     currentUser = session?.user || null;
     updateAuthUI();
@@ -362,9 +365,27 @@ async function handleForgotPassword() {
 
 async function handleSignIn(e) {
   e.preventDefault();
-  var email = document.getElementById('signInEmail').value;
-  var password = document.getElementById('signInPassword').value;
+  var email = (document.getElementById('signInEmail').value || '').trim();
+  var password = (document.getElementById('signInPassword').value || '').trim();
   var errorEl = document.getElementById('authError');
+  hideAuthMessages();
+
+  if (!email) {
+    errorEl.textContent = 'Please enter your registered email address.';
+    errorEl.classList.add('show');
+    return;
+  }
+  if (!password) {
+    errorEl.textContent = 'Password is required to sign in.';
+    errorEl.classList.add('show');
+    return;
+  }
+  if (password.length < 6) {
+    errorEl.textContent = 'Password must be at least 6 characters.';
+    errorEl.classList.add('show');
+    return;
+  }
+
   var res = await dbSignIn(email, password);
   if (res.success) {
     if (!res.data.user?.email_confirmed_at) {

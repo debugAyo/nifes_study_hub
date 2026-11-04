@@ -47,15 +47,30 @@ alter table bookmarks enable row level security;
 alter table questions add column if not exists updated_at timestamptz;
 alter table questions add column if not exists edited_by uuid references auth.users(id);
 
+-- ===== SECURITY DEFINER ROLE HELPERS (Avoids RLS recursion on profiles) =====
+create or replace function public.is_admin_or_superuser(user_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.profiles
+    where id = user_id and role in ('admin', 'superuser')
+  );
+$$ language sql security definer set search_path = public;
+
+create or replace function public.is_superuser(user_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.profiles
+    where id = user_id and role = 'superuser'
+  );
+$$ language sql security definer set search_path = public;
+
 -- ===== NEW RLS POLICIES =====
 
 -- Profiles: everyone reads own, admins/superusers read all
 drop policy if exists profiles_self_read on profiles;
 create policy "profiles_self_read"
   on profiles for select
-  using (auth.uid() = id or exists (
-    select 1 from profiles where id = auth.uid() and role in ('admin', 'superuser')
-  ));
+  using (auth.uid() = id or public.is_admin_or_superuser(auth.uid()));
 
 drop policy if exists profiles_self_update on profiles;
 create policy "profiles_self_update"
@@ -65,7 +80,7 @@ create policy "profiles_self_update"
 drop policy if exists profiles_superuser_update on profiles;
 create policy "profiles_superuser_update"
   on profiles for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'superuser'));
+  using (public.is_superuser(auth.uid()));
 
 -- Bookmarks: self only
 drop policy if exists bookmarks_self on bookmarks;
@@ -81,15 +96,11 @@ drop policy if exists questions_delete on questions;
 
 create policy "questions_modify"
   on questions for update
-  using (auth.uid() = user_id or exists (
-    select 1 from profiles where id = auth.uid() and role in ('admin', 'superuser')
-  ));
+  using (auth.uid() = user_id or public.is_admin_or_superuser(auth.uid()));
 
 create policy "questions_delete"
   on questions for delete
-  using (auth.uid() = user_id or exists (
-    select 1 from profiles where id = auth.uid() and role in ('admin', 'superuser')
-  ));
+  using (auth.uid() = user_id or public.is_admin_or_superuser(auth.uid()));
 
 -- Materials: admins/superusers can edit/delete any
 drop policy if exists materials_owner_update on materials;
@@ -99,15 +110,11 @@ drop policy if exists materials_delete on materials;
 
 create policy "materials_modify"
   on materials for update
-  using (auth.uid() = user_id or exists (
-    select 1 from profiles where id = auth.uid() and role in ('admin', 'superuser')
-  ));
+  using (auth.uid() = user_id or public.is_admin_or_superuser(auth.uid()));
 
 create policy "materials_delete"
   on materials for delete
-  using (auth.uid() = user_id or exists (
-    select 1 from profiles where id = auth.uid() and role in ('admin', 'superuser')
-  ));
+  using (auth.uid() = user_id or public.is_admin_or_superuser(auth.uid()));
 
 -- Storage: admins/superusers can delete any
 drop policy if exists storage_owner_delete on storage.objects;
@@ -116,7 +123,5 @@ drop policy if exists storage_delete on storage.objects;
 create policy "storage_delete"
   on storage.objects for delete
   using (bucket_id = 'study-materials' and (
-    auth.uid() = owner or exists (
-      select 1 from profiles where id = auth.uid() and role in ('admin', 'superuser')
-    )
+    auth.uid() = owner or public.is_admin_or_superuser(auth.uid())
   ));

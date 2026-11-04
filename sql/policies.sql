@@ -13,7 +13,7 @@ create policy "questions_public_read"
 
 create policy "questions_auth_insert"
   on questions for insert
-  with check (auth.role() = 'authenticated');
+  with check (auth.role() = 'authenticated' and (user_id is null or user_id = auth.uid()));
 
 create policy "questions_owner_update"
   on questions for update
@@ -30,7 +30,7 @@ create policy "materials_public_read"
 
 create policy "materials_auth_insert"
   on materials for insert
-  with check (auth.role() = 'authenticated');
+  with check (auth.role() = 'authenticated' and (user_id is null or user_id = auth.uid()));
 
 create policy "materials_owner_update"
   on materials for update
@@ -47,7 +47,7 @@ create policy "quiz_sessions_self_read"
 
 create policy "quiz_sessions_auth_insert"
   on quiz_sessions for insert
-  with check (auth.role() = 'authenticated');
+  with check (auth.role() = 'authenticated' and (user_id is null or user_id = auth.uid()));
 
 -- ===== STORAGE =====
 create policy "storage_public_read"
