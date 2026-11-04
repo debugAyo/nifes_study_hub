@@ -99,6 +99,10 @@ a,button,[role="button"],input,textarea,select{transition:color var(--transition
 ::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--color-text-faint)}
 
+/* ─── Global SVG Constraints ─────────────────────── */
+svg { max-width: 100%; vertical-align: middle; }
+.icon, svg.icon { width: 18px !important; height: 18px !important; flex-shrink: 0 !important; }
+
 /* ─── Layout ────────────────────────────────────── */
 .app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:auto 1fr;min-height:100dvh}
 @media(max-width:768px){.app{grid-template-columns:1fr}}

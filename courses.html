@@ -6,12 +6,41 @@
 <title>Courses & Past Questions — NIFES Study Hub FUT Minna</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0d5c3a">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/site.css">
+<link rel="stylesheet" href="./css/site.css">
 <style>
+/* ─── Bulletproof SVG & Icon Constraints (Executes immediately) ─── */
+svg { max-width: 100%; display: inline-block; vertical-align: middle; }
+.icon, svg.icon, svg[class*="icon"], .nav-logo-icon svg {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+.icon-box {
+  width: 42px !important;
+  height: 42px !important;
+  max-width: 42px !important;
+  max-height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--color-primary-light, #e8f4ee) !important;
+  color: var(--color-primary, #0d5c3a) !important;
+  border: 1px solid var(--color-border, #e2e8e5) !important;
+  flex-shrink: 0 !important;
+}
+
 .filter-bar{display:flex;gap:10px;margin-bottom:32px;flex-wrap:wrap;align-items:center}
 .filter-btn{padding:8px 16px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:var(--color-surface);font-size:0.85rem;font-weight:700;color:var(--color-text-muted);cursor:pointer;transition:all var(--transition)}
 .filter-btn:hover{border-color:var(--color-primary);color:var(--color-primary)}
@@ -28,7 +57,7 @@
 <header class="nav" id="nav">
   <div class="container">
     <div class="nav-inner">
-      <a href="/index.html" class="nav-logo">
+      <a href="index.html" class="nav-logo">
         <div class="nav-logo-icon">
           <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
@@ -39,16 +68,16 @@
       </a>
 
       <nav class="nav-links">
-        <a href="/index.html" class="nav-link">Home</a>
-        <a href="/courses.html" class="nav-link active">Courses</a>
-        <a href="/cbt-practice.html" class="nav-link">CBT Simulator</a>
-        <a href="/cgpa-calculator.html" class="nav-link">CGPA Calculator</a>
-        <a href="/about.html" class="nav-link">About NIFES</a>
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="courses.html" class="nav-link active">Courses</a>
+        <a href="cbt-practice.html" class="nav-link">CBT Simulator</a>
+        <a href="cgpa-calculator.html" class="nav-link">CGPA Calculator</a>
+        <a href="about.html" class="nav-link">About NIFES</a>
       </nav>
 
       <div class="nav-actions">
         <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
-        <a href="/app/index.html" class="btn btn-primary">Open App</a>
+        <a href="app/index.html" class="btn btn-primary">Open App</a>
         <button class="nav-toggle" id="navToggle" onclick="toggleMobileNav()" aria-label="Toggle navigation menu">
           <span></span>
           <span></span>
@@ -58,14 +87,14 @@
     </div>
     <!-- Mobile Navigation Drawer -->
     <div class="nav-mobile" id="navMobile">
-      <a href="/index.html" class="nav-mobile-link">Home</a>
-      <a href="/courses.html" class="nav-mobile-link active">Courses & Past Questions</a>
-      <a href="/cbt-practice.html" class="nav-mobile-link">CBT Simulator</a>
-      <a href="/cgpa-calculator.html" class="nav-mobile-link">5.0 CGPA Calculator</a>
-      <a href="/about.html" class="nav-mobile-link">About NIFES</a>
+      <a href="index.html" class="nav-mobile-link">Home</a>
+      <a href="courses.html" class="nav-mobile-link active">Courses & Past Questions</a>
+      <a href="cbt-practice.html" class="nav-mobile-link">CBT Simulator</a>
+      <a href="cgpa-calculator.html" class="nav-mobile-link">5.0 CGPA Calculator</a>
+      <a href="about.html" class="nav-mobile-link">About NIFES</a>
       <div class="nav-mobile-actions">
-        <a href="/app/index.html#signin" class="btn btn-secondary" style="width:100%">Sign In</a>
-        <a href="/app/index.html#signup" class="btn btn-primary" style="width:100%">Sign Up Free</a>
+        <a href="app/index.html#signin" class="btn btn-secondary" style="width:100%">Sign In</a>
+        <a href="app/index.html#signup" class="btn btn-primary" style="width:100%">Sign Up Free</a>
       </div>
     </div>
   </div>
@@ -115,7 +144,7 @@
           <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
             ✓ 60+ Verified Past Questions (2020–2024)
           </div>
-          <a href="/app/index.html" class="btn btn-secondary w-full" style="width:100%">Practice CBT Exam →</a>
+          <a href="app/index.html" class="btn btn-secondary w-full" style="width:100%">Practice CBT Exam →</a>
         </div>
 
         <!-- PHY 101 -->
@@ -131,7 +160,7 @@
           <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
             ✓ 50+ Verified Past Questions (2019–2024)
           </div>
-          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+          <a href="app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
         </div>
 
         <!-- CHM 101 -->
@@ -147,7 +176,7 @@
           <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
             ✓ 45+ Verified Past Questions (2021–2024)
           </div>
-          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+          <a href="app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
         </div>
 
         <!-- GST 101 -->
@@ -163,7 +192,7 @@
           <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
             ✓ 50+ Verified Past Questions (2020–2024)
           </div>
-          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+          <a href="app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
         </div>
 
         <!-- CSC 101 -->
@@ -179,7 +208,7 @@
           <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
             ✓ 40+ Verified Past Questions (2021–2024)
           </div>
-          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+          <a href="app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
         </div>
 
         <!-- MTH 201 -->
@@ -195,7 +224,7 @@
           <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
             ✓ 35+ Verified Past Questions (2020–2024)
           </div>
-          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+          <a href="app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
         </div>
 
         <!-- MEE 201 -->
@@ -211,7 +240,7 @@
           <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
             ✓ 30+ Verified Past Questions (2019–2023)
           </div>
-          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+          <a href="app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
         </div>
 
         <!-- EEE 201 -->
@@ -227,7 +256,7 @@
           <div style="font-size:0.8rem;color:var(--color-accent);font-weight:700;margin-bottom:14px">
             ✓ 25+ Verified Past Questions (2021–2024)
           </div>
-          <a href="/app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
+          <a href="app/index.html" class="btn btn-secondary" style="width:100%">Practice CBT Exam →</a>
         </div>
 
       </div>
@@ -239,12 +268,12 @@
 <footer class="footer">
   <div class="container">
     <div class="footer-nav">
-      <a href="/index.html" class="footer-link">Home</a>
-      <a href="/courses.html" class="footer-link">Courses</a>
-      <a href="/cbt-practice.html" class="footer-link">CBT Simulator</a>
-      <a href="/cgpa-calculator.html" class="footer-link">CGPA Calculator</a>
-      <a href="/about.html" class="footer-link">About NIFES</a>
-      <a href="/app/index.html" class="footer-link">Study Hub App</a>
+      <a href="index.html" class="footer-link">Home</a>
+      <a href="courses.html" class="footer-link">Courses</a>
+      <a href="cbt-practice.html" class="footer-link">CBT Simulator</a>
+      <a href="cgpa-calculator.html" class="footer-link">CGPA Calculator</a>
+      <a href="about.html" class="footer-link">About NIFES</a>
+      <a href="app/index.html" class="footer-link">Study Hub App</a>
     </div>
     <p>© 2026 NIFES Study Hub — Federal University of Technology, Minna (FUT Minna)</p>
     <p style="margin-top:8px;font-size:0.8rem;color:var(--color-text-faint)">
