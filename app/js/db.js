@@ -20,6 +20,7 @@ async function dbFetchQuestions(filters) {
     if (filters.course) query = query.eq('course', filters.course);
     if (filters.year) query = query.eq('year', filters.year);
     if (filters.type) query = query.eq('type', filters.type);
+    if (filters.status) query = query.eq('status', filters.status);
     var result = await query.order('created_at', { ascending: false });
     if (result.error) throw result.error;
     return { success: true, data: result.data };
@@ -33,7 +34,10 @@ async function dbAddQuestion(questionData) {
   try {
     if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
     var user = await supabaseClient.auth.getUser();
-    var payload = Object.assign({}, questionData, { user_id: user?.data?.user?.id || null });
+    var payload = Object.assign({}, questionData, { 
+      user_id: user?.data?.user?.id || null,
+      status: 'pending' // Defaults to pending, auto-approved via trigger if admin
+    });
     var result = await supabaseClient.from('questions').insert(payload).select().single();
     if (result.error) throw result.error;
     return { success: true, data: result.data };
@@ -49,6 +53,7 @@ async function dbFetchMaterials(filters) {
     var query = supabaseClient.from('materials').select('*');
     if (filters.level) query = query.eq('level', filters.level);
     if (filters.course) query = query.eq('course', filters.course);
+    if (filters.status) query = query.eq('status', filters.status);
     var result = await query.order('created_at', { ascending: false });
     if (result.error) throw result.error;
     return { success: true, data: result.data };
@@ -64,6 +69,12 @@ async function dbUploadMaterial(file, metadata) {
     var user = userResult.data?.user;
     if (!user) return { success: false, error: 'You must be logged in to upload.' };
 
+    // 10MB limit enforcement
+    var MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return { success: false, error: 'File size exceeds maximum permitted limit (10MB).' };
+    }
+
     var timestamp = Date.now();
     var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     var filePath = user.id + '/' + timestamp + '_' + safeName;
@@ -76,15 +87,70 @@ async function dbUploadMaterial(file, metadata) {
       .from('study-materials').getPublicUrl(filePath);
 
     var dbResult = await supabaseClient.from('materials').insert({
-      level: metadata.level, course: metadata.course, code: metadata.code || '',
-      title: metadata.title, type: metadata.type, file_url: urlResult.data.publicUrl,
-      file_name: file.name, file_size: file.size, content_type: file.type, user_id: user.id,
+      level: metadata.level,
+      course: metadata.course,
+      code: metadata.code || '',
+      title: metadata.title,
+      type: metadata.type,
+      file_url: urlResult.data.publicUrl,
+      file_name: file.name,
+      file_size: file.size,
+      content_type: file.type,
+      user_id: user.id,
+      status: 'pending' // auto-approved via trigger if admin/superuser
     }).select().single();
 
     if (dbResult.error) throw dbResult.error;
     return { success: true, data: dbResult.data };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+}
+
+/* ─── Moderation Actions ─────────────────────────── */
+async function dbApproveItem(table, id) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var user = await supabaseClient.auth.getUser();
+    var result = await supabaseClient.from(table).update({
+      status: 'approved',
+      reviewed_by: user?.data?.user?.id || null,
+      reviewed_at: new Date().toISOString()
+    }).eq('id', id);
+    if (result.error) throw result.error;
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+async function dbRejectItem(table, id) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var user = await supabaseClient.auth.getUser();
+    var result = await supabaseClient.from(table).update({
+      status: 'rejected',
+      reviewed_by: user?.data?.user?.id || null,
+      reviewed_at: new Date().toISOString()
+    }).eq('id', id);
+    if (result.error) throw result.error;
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+async function dbFetchPendingItems(table) {
+  try {
+    if (!supabaseClient) return { success: false, data: [] };
+    var result = await supabaseClient.from(table)
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    if (result.error) throw result.error;
+    return { success: true, data: result.data || [] };
+  } catch (err) {
+    return { success: false, error: err.message, data: [] };
   }
 }
 
@@ -129,7 +195,6 @@ async function dbSignInWithGoogle() {
   try {
     if (!supabaseClient) return { success: false, error: 'Supabase authentication is not configured.' };
     
-    // Explicitly redirect to /app/index.html after Google authentication
     var redirectTo = window.location.href.split('#')[0].split('?')[0];
     if (!redirectTo || redirectTo === 'null' || redirectTo.startsWith('file:')) {
       redirectTo = window.location.origin ? window.location.origin + '/app/index.html' : 'http://localhost:3000/app/index.html';
@@ -177,7 +242,6 @@ async function dbGetCurrentUser() {
   } catch { return null; }
 }
 
-/* ─── Auth Token ──────────────────────────────────── */
 async function dbGetAuthToken() {
   try {
     if (!supabaseClient) return null;
@@ -186,7 +250,6 @@ async function dbGetAuthToken() {
   } catch { return null; }
 }
 
-/* ─── Password Reset ──────────────────────────────── */
 async function dbResetPassword(email) {
   try {
     if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
@@ -200,14 +263,12 @@ async function dbResetPassword(email) {
   }
 }
 
-/* ─── Profiles / Roles ────────────────────────────── */
 async function dbGetProfile(userId) {
   try {
     if (!supabaseClient) return { success: false, error: 'Supabase not configured', data: null };
     var result = await supabaseClient.from('profiles').select('*').eq('id', userId).maybeSingle();
     if (result.error) throw result.error;
     if (!result.data) {
-      // Auto-create profile if missing (e.g. user signed up before migration)
       var user = await supabaseClient.auth.getUser();
       var meta = user?.data?.user?.user_metadata;
       var fullName = meta?.full_name || meta?.name || user?.data?.user?.email?.split('@')[0] || 'Scholar';
@@ -253,7 +314,6 @@ async function dbUpdateUserRole(userId, role) {
   }
 }
 
-/* ─── Bookmarks ───────────────────────────────────── */
 async function dbToggleBookmark(questionId) {
   try {
     if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
@@ -288,7 +348,6 @@ async function dbFetchBookmarks() {
   }
 }
 
-/* ─── Quiz History ────────────────────────────────── */
 async function dbFetchQuizSessions(limit) {
   limit = limit || 10;
   try {
@@ -305,7 +364,6 @@ async function dbFetchQuizSessions(limit) {
   }
 }
 
-/* ─── Edit / Delete Questions ─────────────────────── */
 async function dbUpdateQuestion(id, data) {
   try {
     if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
@@ -341,7 +399,6 @@ async function dbDeleteMaterial(id) {
   }
 }
 
-/* ─── Paginated Questions ─────────────────────────── */
 async function dbFetchQuestionsPaginated(level, page, perPage) {
   page = page || 1;
   perPage = perPage || 20;

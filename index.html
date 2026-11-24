@@ -3,107 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NIFES Study Hub — FUT Minna Past Questions & CBT Practice</title>
+<title>NIFES Study Hub — FUT Minna Academic & Past Questions Archive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0d5c3a">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#161816">
 <link rel="stylesheet" href="./css/site.css">
-<style>
-/* ─── Bulletproof SVG & Icon Constraints (Executes immediately) ─── */
-svg { max-width: 100%; display: inline-block; vertical-align: middle; }
-.icon, svg.icon, svg[class*="icon"], .nav-logo-icon svg {
-  width: 20px !important;
-  height: 20px !important;
-  max-width: 20px !important;
-  max-height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
-  flex-shrink: 0 !important;
-  display: inline-block !important;
-}
-.icon-box {
-  width: 42px !important;
-  height: 42px !important;
-  max-width: 42px !important;
-  max-height: 42px !important;
-  min-width: 42px !important;
-  min-height: 42px !important;
-  border-radius: 10px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: var(--color-primary-light, #e8f4ee) !important;
-  color: var(--color-primary, #0d5c3a) !important;
-  border: 1px solid var(--color-border, #e2e8e5) !important;
-  flex-shrink: 0 !important;
-  margin-bottom: 18px !important;
-}
-
-.hero{padding:100px 0 50px;position:relative}
-.hero-grid{display:grid;grid-template-columns:1.08fr 0.92fr;gap:40px;align-items:center}
-@media(max-width:960px){.hero-grid{grid-template-columns:1fr;gap:36px;text-align:center}}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--radius-full);background:var(--color-primary-light);color:var(--color-primary);font-size:0.8rem;font-weight:700;margin-bottom:16px;border:1px solid var(--color-border)}
-.hero-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--color-primary)}
-.hero h1{font-family:var(--font-serif);font-size:clamp(2rem,3.4vw,2.8rem);line-height:1.15;letter-spacing:-0.02em;margin-bottom:16px;color:var(--color-text)}
-.hero h1 em{font-style:italic;color:var(--color-primary)}
-.hero p{font-size:1.05rem;color:var(--color-text-muted);line-height:1.65;margin-bottom:28px;max-width:540px}
-@media(max-width:960px){.hero p{margin-left:auto;margin-right:auto}}
-.hero-buttons{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:32px}
-@media(max-width:960px){.hero-buttons{justify-content:center}}
-
-.hero-stats-row{display:flex;gap:36px;padding-top:28px;border-top:1px solid var(--color-divider);flex-wrap:wrap}
-@media(max-width:960px){.hero-stats-row{justify-content:center}}
-.hero-stat-item{text-align:left}
-.hero-stat-val{font-size:1.6rem;font-weight:800;color:var(--color-text);line-height:1}
-.hero-stat-lbl{font-size:0.78rem;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-top:6px}
-
-/* Bento Preview Card */
-.preview-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:24px;box-shadow:var(--shadow-lg);position:relative}
-.preview-topbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--color-divider)}
-.preview-user{display:flex;align-items:center;gap:10px}
-.preview-avatar{width:36px;height:36px;border-radius:50%;background:var(--color-primary-light);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem}
-.preview-username{font-size:0.88rem;font-weight:700}
-.preview-userlevel{font-size:0.75rem;color:var(--color-text-muted)}
-.preview-status{font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:var(--radius-full);background:var(--color-primary-light);color:var(--color-primary)}
-.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:480px){.preview-grid{grid-template-columns:1fr}}
-.preview-box{background:var(--color-surface-offset);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px}
-.preview-box.featured{grid-column:1 / -1;background:linear-gradient(135deg,var(--color-surface-offset),var(--color-surface))}
-.preview-box-tag{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-accent);margin-bottom:8px}
-.preview-box-title{font-size:1rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-.preview-box-desc{font-size:0.8rem;color:var(--color-text-muted);line-height:1.5}
-.preview-progress-bar{height:6px;background:var(--color-border);border-radius:4px;overflow:hidden;margin-top:10px}
-.preview-progress-fill{height:100%;width:78%;background:var(--color-primary);border-radius:4px}
-.preview-timer-num{font-family:monospace;font-size:1.8rem;font-weight:800;color:var(--color-text);line-height:1}
-
-/* Hub Portal Pillars */
-.portal-tile{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:36px 30px;box-shadow:var(--shadow-sm);transition:all var(--transition);display:flex;flex-direction:column;justify-content:space-between}
-.portal-tile:hover{border-color:var(--color-primary);transform:translateY(-3px);box-shadow:var(--shadow-md)}
-.tile-badge{display:inline-block;padding:4px 10px;border-radius:var(--radius-sm);font-size:0.75rem;font-weight:800;text-transform:uppercase;margin-bottom:16px;background:var(--color-surface-offset);color:var(--color-primary)}
-</style>
 </head>
 <body>
 
-<!-- ─── Header & Nav ─── -->
+<!-- ─── Editorial Header & Nav ─── -->
 <header class="nav" id="nav">
   <div class="container">
     <div class="nav-inner">
       <a href="index.html" class="nav-logo">
-        <div class="nav-logo-icon">
-          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-            <path d="m9 9 2 2 4-4"/>
-          </svg>
-        </div>
+        <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          <path d="m9 9 2 2 4-4"/>
+        </svg>
         <div class="nav-logo-text">NIFES <span>Study Hub</span></div>
       </a>
 
       <nav class="nav-links">
         <a href="index.html" class="nav-link active">Home</a>
-        <a href="courses.html" class="nav-link">Courses</a>
+        <a href="courses.html" class="nav-link">Courses & Archive</a>
         <a href="cbt-practice.html" class="nav-link">CBT Simulator</a>
         <a href="cgpa-calculator.html" class="nav-link">CGPA Calculator</a>
         <a href="about.html" class="nav-link">About NIFES</a>
@@ -112,7 +36,7 @@ svg { max-width: 100%; display: inline-block; vertical-align: middle; }
       <div class="nav-actions">
         <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
         <a href="app/index.html#signin" class="btn btn-secondary btn-sm">Sign In</a>
-        <a href="app/index.html#signup" class="btn btn-primary btn-sm">Sign Up Free</a>
+        <a href="app/index.html#signup" class="btn btn-primary btn-sm">Enter Study Hub</a>
         <button class="nav-toggle" id="navToggle" onclick="toggleMobileNav()" aria-label="Toggle navigation menu">
           <span></span>
           <span></span>
@@ -120,253 +44,213 @@ svg { max-width: 100%; display: inline-block; vertical-align: middle; }
         </button>
       </div>
     </div>
-    <!-- Mobile Navigation Drawer -->
+
+    <!-- Mobile Drawer -->
     <div class="nav-mobile" id="navMobile">
-      <a href="index.html" class="nav-mobile-link active">Home</a>
+      <a href="index.html" class="nav-mobile-link">Home</a>
       <a href="courses.html" class="nav-mobile-link">Courses & Past Questions</a>
       <a href="cbt-practice.html" class="nav-mobile-link">CBT Simulator</a>
       <a href="cgpa-calculator.html" class="nav-mobile-link">5.0 CGPA Calculator</a>
       <a href="about.html" class="nav-mobile-link">About NIFES</a>
-      <div class="nav-mobile-actions">
-        <a href="app/index.html#signin" class="btn btn-secondary" style="width:100%">Sign In</a>
-        <a href="app/index.html#signup" class="btn btn-primary" style="width:100%">Sign Up Free</a>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <a href="app/index.html#signin" class="btn btn-secondary btn-sm" style="flex:1">Sign In</a>
+        <a href="app/index.html#signup" class="btn btn-primary btn-sm" style="flex:1">Enter Hub</a>
       </div>
     </div>
   </div>
 </header>
 
 <main>
-  <!-- ─── Hero Section ─── -->
+  <!-- ─── Hero Section: Asymmetric Editorial Split ─── -->
   <section class="hero">
     <div class="container">
       <div class="hero-grid">
         
-        <div class="hero-content">
-          <div class="hero-badge">
-            <span class="hero-badge-dot"></span>
-            Excellence in Faith • Distinction in Learning • FUT Minna
-          </div>
+        <div class="hero-left">
+          <span class="hero-badge-academic">FUT Minna Chapter · Academic Commission</span>
           <h1>
-            Master Your Exams.<br>
-            <em>Study Smarter, Together.</em>
+            Excellence in faith,<br>
+            <em>distinction in learning.</em>
           </h1>
-          <p>
-            The dedicated academic study hub for Federal University of Technology, Minna. Practice real timed CBT exams, review step-by-step past questions, and track your Nigerian 5.0 CGPA.
+          <p class="hero-desc">
+            The dedicated academic repository and examination simulator for Nigerian university scholars. Review verified past questions across 100L to 500L, simulate real timed CBT tests, and forecast your Nigerian 5.0 CGPA.
           </p>
-          <div class="hero-buttons">
+          <div class="hero-cta-group">
             <a href="app/index.html#signup" class="btn btn-primary btn-lg">
-              Sign Up to Practice CBT
-              <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              Enter Study Hub
+              <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
             </a>
-            <a href="courses.html" class="btn btn-secondary btn-lg">Explore Course Directory</a>
-          </div>
-          
-          <div class="hero-stats-row">
-            <div class="hero-stat-item">
-              <div class="hero-stat-val">100L – 300L</div>
-              <div class="hero-stat-lbl">Course Levels</div>
-            </div>
-            <div class="hero-stat-item">
-              <div class="hero-stat-val">Real CBT</div>
-              <div class="hero-stat-lbl">Mock Simulator</div>
-            </div>
-            <div class="hero-stat-item">
-              <div class="hero-stat-val">5.0 Scale</div>
-              <div class="hero-stat-lbl">CGPA Planner</div>
-            </div>
+            <a href="courses.html" class="btn btn-secondary btn-lg">Browse Past Questions</a>
           </div>
         </div>
 
-        <!-- Bento Student Dashboard Mockup -->
-        <div class="hero-preview">
-          <div class="preview-card">
-            <div class="preview-topbar">
-              <div class="preview-user">
-                <div class="preview-avatar">NS</div>
-                <div>
-                  <div class="preview-username">FUT Minna Scholar</div>
-                  <div class="preview-userlevel">School of Engineering (SEET)</div>
-                </div>
-              </div>
-              <div class="preview-status">Authenticated Member</div>
+        <!-- Right Side: Academic Ledger Card -->
+        <div class="hero-right">
+          <div class="editorial-ledger">
+            <div class="ledger-header">
+              <span class="ledger-title">Academic Ledger</span>
+              <span class="ledger-edition">2026 Edition</span>
             </div>
 
-            <div class="preview-grid">
-              <div class="preview-box featured">
-                <div class="preview-box-tag">Active CBT Mock Test</div>
-                <div class="preview-box-title">
-                  <span>MTH 101 — Elementary Math I</span>
-                  <span style="font-size:0.85rem;color:var(--color-primary);font-weight:700">20 Qs</span>
-                </div>
-                <div class="preview-box-desc">Calculus, Vectors & Quadratic Equations • Timed Mode</div>
-                <div class="preview-progress-bar">
-                  <div class="preview-progress-fill"></div>
-                </div>
-              </div>
+            <div class="ledger-entry">
+              <span class="ledger-term">Curriculum Coverage</span>
+              <span class="ledger-val">100L – 500L</span>
+            </div>
 
-              <div class="preview-box">
-                <div class="preview-box-tag">Pomodoro Focus</div>
-                <div class="preview-timer-num">25:00</div>
-                <div class="preview-box-desc" style="margin-top:6px">Session 2 of 4 • Deep Focus</div>
-              </div>
+            <div class="ledger-entry">
+              <span class="ledger-term">Grading System</span>
+              <span class="ledger-val">5.00 Scale</span>
+            </div>
 
-              <div class="preview-box">
-                <div class="preview-box-tag">CGPA Standing</div>
-                <div class="preview-timer-num" style="color:var(--color-primary)">4.75</div>
-                <div class="preview-box-desc" style="margin-top:6px">First Class Honours • 5.0 Scale</div>
-              </div>
+            <div class="ledger-entry">
+              <span class="ledger-term">Examination Mode</span>
+              <span class="ledger-val accent">Real CBT</span>
+            </div>
+
+            <div class="ledger-entry">
+              <span class="ledger-term">Verification Protocol</span>
+              <span class="ledger-val">Peer Moderated</span>
+            </div>
+
+            <div class="ledger-entry">
+              <span class="ledger-term">Access Tier</span>
+              <span class="ledger-val">Open Student Fellowship</span>
             </div>
           </div>
         </div>
 
       </div>
 
-      <!-- Foundation Scripture Plaque -->
-      <div class="scripture-banner">
-        <div class="scripture-quote">
+      <!-- Scripture Inscription -->
+      <div class="scripture-inscription">
+        <blockquote class="scripture-quote">
           “As for these four youths, God gave them knowledge and skill in all literature and wisdom; and Daniel had understanding in all visions and dreams.”
-        </div>
-        <div class="scripture-ref">
-          <span>📖 Daniel 1:17</span>
+        </blockquote>
+        <div class="scripture-cite">
+          <span>Daniel 1:17</span>
           <span>•</span>
-          <span>Academic Commission Foundation Scripture</span>
+          <span>Academic Commission Motto</span>
           <span>•</span>
-          <span style="color:var(--color-primary)">“Diligence & Distinction in All Things”</span>
+          <span>“Diligence & Distinction in All Things”</span>
         </div>
       </div>
 
     </div>
   </section>
 
-  <!-- ─── Hub Portals Navigation (Directing users to separate pages) ─── -->
-  <section class="section" style="background:var(--color-surface)">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Dedicated Study Sections</span>
-        <h2 class="section-title">Explore the Academic Hub</h2>
-        <p class="section-desc">Each part of your academic preparation has its own dedicated space.</p>
-      </div>
-
-      <div class="grid-3">
-        
-        <!-- Pillar 1: Courses Page -->
-        <div class="portal-tile">
-          <div>
-            <span class="tile-badge">Level Directory</span>
-            <div class="icon-box" style="width:40px;height:40px;min-width:40px;min-height:40px;margin-bottom:18px;">
-              <svg class="icon" width="20" height="20" style="width:20px;height:20px;max-width:20px;max-height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><polyline points="10 8 10 12 14 12"/></svg>
-            </div>
-            <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:10px">Courses & Past Questions</h3>
-            <p style="font-size:0.92rem;color:var(--color-text-muted);line-height:1.7;margin-bottom:24px">
-              Browse past question archives and comprehensive syllabi organized by 100L, 200L, and 300L across engineering, science, and computing faculties.
-            </p>
-          </div>
-          <a href="courses.html" class="btn btn-secondary" style="width:100%">Open Courses Directory →</a>
-        </div>
-
-        <!-- Pillar 2: CBT Simulator Page -->
-        <div class="portal-tile">
-          <div>
-            <span class="tile-badge" style="background:var(--color-primary-light);color:var(--color-primary)">Sign In Required</span>
-            <div class="icon-box" style="width:40px;height:40px;min-width:40px;min-height:40px;margin-bottom:18px;">
-              <svg class="icon" width="20" height="20" style="width:20px;height:20px;max-width:20px;max-height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
-            <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:10px">CBT Exam Simulator</h3>
-            <p style="font-size:0.92rem;color:var(--color-text-muted);line-height:1.7;margin-bottom:24px">
-              Simulate actual university computer-based tests with real countdown timers, question palette jumping, question flagging, and detailed post-test score analysis.
-            </p>
-          </div>
-          <a href="cbt-practice.html" class="btn btn-secondary" style="width:100%">Learn About CBT Mode →</a>
-        </div>
-
-        <!-- Pillar 3: CGPA Calculator Page -->
-        <div class="portal-tile">
-          <div>
-            <span class="tile-badge">Interactive Tool</span>
-            <div class="icon-box" style="width:40px;height:40px;min-width:40px;min-height:40px;margin-bottom:18px;">
-              <svg class="icon" width="20" height="20" style="width:20px;height:20px;max-width:20px;max-height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
-            </div>
-            <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:10px">5.0 CGPA Calculator</h3>
-            <p style="font-size:0.92rem;color:var(--color-text-muted);line-height:1.7;margin-bottom:24px">
-              Live semester GPA and target planner based on exact FUT Minna 5.0 grading standards. Enter your credit units and grades to forecast your honors standing.
-            </p>
-          </div>
-          <a href="cgpa-calculator.html" class="btn btn-secondary" style="width:100%">Open CGPA Calculator →</a>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── Student Reviews ─── -->
-  <section class="section" id="reviews" style="background:var(--color-surface-offset)">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Student Testimonials</span>
-        <h2 class="section-title">Tested & Trusted by FUT Minna Students</h2>
-        <p class="section-desc">Here is what scholars across faculties say about studying with NIFES Study Hub.</p>
-      </div>
-
-      <div class="grid-3">
-        
-        <div class="card">
-          <div class="review-stars">★★★★★</div>
-          <p class="review-text">
-            “Practicing with the timed CBT simulator was a game changer for my MTH 201 exams. Learning to navigate questions under time pressure helped me bag an 'A' in my semester finals!”
-          </p>
-          <div class="review-author">
-            <div class="review-avatar">EO</div>
-            <div>
-              <div class="review-name">Emmanuel O.</div>
-              <div class="review-dept">300L Mechanical Engineering (SEET)</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="review-stars">★★★★★</div>
-          <p class="review-text">
-            “The step-by-step solutions for PHY 101 and CSC 101 broke down complex problems better than any textbook. My test scores jumped from average to top 5% of my class.”
-          </p>
-          <div class="review-author">
-            <div class="review-avatar">BA</div>
-            <div>
-              <div class="review-name">Blessing A.</div>
-              <div class="review-dept">200L Computer Science (SICT)</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="review-stars">★★★★★</div>
-          <p class="review-text">
-            “The Nigerian 5.0 CGPA calculator helped me map out my target grades from week one. Together with the Pomodoro study sprints, it kept me disciplined through exam week.”
-          </p>
-          <div class="review-author">
-            <div class="review-avatar">DK</div>
-            <div>
-              <div class="review-name">David K.</div>
-              <div class="review-dept">100L Chemical Engineering (SEET)</div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── Sign In / Sign Up CTA Banner ─── -->
+  <!-- ─── Pillars: Asymmetric Rows ─── -->
   <section class="section">
     <div class="container">
-      <div style="background:linear-gradient(135deg,var(--color-surface),var(--color-surface-offset));border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:50px 36px;text-align:center;box-shadow:var(--shadow-lg)">
-        <span class="hero-badge" style="margin-bottom:12px">Free Student Membership</span>
-        <h2 style="font-family:var(--font-serif);font-size:clamp(2rem,3.5vw,2.8rem);margin-bottom:12px">Ready to Take Your First CBT Practice Test?</h2>
-        <p style="font-size:1.05rem;color:var(--color-text-muted);max-width:560px;margin:0 auto 28px">
-          Create your free student account or sign in to launch timed mock exams, record test scores, and track your performance history.
+      
+      <span class="section-label">Academic Foundations</span>
+      <h2 class="section-title">The Three Pillars of the Study Hub</h2>
+      <p class="section-desc" style="max-width:540px;margin-bottom:32px">
+        Designed to support students from freshman matriculation through final year degree defense.
+      </p>
+
+      <!-- Pillar 1 -->
+      <div class="pillar-row">
+        <div>
+          <div class="pillar-num">01 / REPOSITORY</div>
+          <h3 class="pillar-name">Past Questions & Syllabi</h3>
+          <p class="pillar-desc">
+            Organized course documents across 100L, 200L, 300L, 400L, and 500L. Download verified examination papers, lecture notes, and solution guides.
+          </p>
+          <a href="courses.html" class="pillar-link">Open Course Directory →</a>
+        </div>
+        <div class="pillar-panel">
+          <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--ink-muted);margin-bottom:10px">SAMPLE COURSE CODES</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="font-family:var(--font-mono);font-size:0.85rem;background:var(--paper);border:var(--border-rule);padding:4px 10px">MTH 101</span>
+            <span style="font-family:var(--font-mono);font-size:0.85rem;background:var(--paper);border:var(--border-rule);padding:4px 10px">PHY 101</span>
+            <span style="font-family:var(--font-mono);font-size:0.85rem;background:var(--paper);border:var(--border-rule);padding:4px 10px">CHM 101</span>
+            <span style="font-family:var(--font-mono);font-size:0.85rem;background:var(--paper);border:var(--border-rule);padding:4px 10px">MEE 201</span>
+            <span style="font-family:var(--font-mono);font-size:0.85rem;background:var(--paper);border:var(--border-rule);padding:4px 10px">CPT 301</span>
+            <span style="font-family:var(--font-mono);font-size:0.85rem;background:var(--paper);border:var(--border-rule);padding:4px 10px">EEE 401</span>
+            <span style="font-family:var(--font-mono);font-size:0.85rem;background:var(--paper);border:var(--border-rule);padding:4px 10px">CSC 501</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pillar 2 -->
+      <div class="pillar-row reversed">
+        <div class="pillar-panel">
+          <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--ink-muted);margin-bottom:10px">EXAMINATION ENVIRONMENT</div>
+          <p style="font-size:0.9rem;color:var(--ink-soft);line-height:1.6">
+            Countdown clock, random question shuffling, question flag jumping palette, auto-submission safeguard, and detailed step-by-step review.
+          </p>
+        </div>
+        <div>
+          <div class="pillar-num">02 / SIMULATION</div>
+          <h3 class="pillar-name">Timed CBT Exam Simulator</h3>
+          <p class="pillar-desc">
+            Replicates university e-testing conditions. Practice with genuine mock questions under strict time pressure to master pacing before the examination hall.
+          </p>
+          <a href="cbt-practice.html" class="pillar-link">Learn About CBT Simulator →</a>
+        </div>
+      </div>
+
+      <!-- Pillar 3 -->
+      <div class="pillar-row">
+        <div>
+          <div class="pillar-num">03 / FORECASTING</div>
+          <h3 class="pillar-name">5.0 Nigerian CGPA Planner</h3>
+          <p class="pillar-desc">
+            Exact FUT Minna grading standards (A=5, B=4, C=3, D=2, E=1, F=0). Input unit loads and projected letter grades to evaluate honours standing and semester targets.
+          </p>
+          <a href="cgpa-calculator.html" class="pillar-link">Open CGPA Planner →</a>
+        </div>
+        <div class="pillar-panel">
+          <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--ink-muted);margin-bottom:10px">HONOURS CLASSIFICATION</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.85rem;color:var(--ink-soft)">
+            <div>4.50 – 5.00: <strong>First Class</strong></div>
+            <div>3.50 – 4.49: <strong>Second Class (Upper)</strong></div>
+            <div>2.40 – 3.49: <strong>Second Class (Lower)</strong></div>
+            <div>1.50 – 2.39: <strong>Third Class</strong></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── Testimonials: Editorial Pull Quotes ─── -->
+  <section class="section">
+    <div class="container">
+      <span class="section-label">Fellowship Experiences</span>
+      <h2 class="section-title">Tested & Trusted by Scholars</h2>
+      
+      <div class="quotes-grid">
+        <div class="quote-block">
+          <p class="quote-body">
+            “Practicing with the timed CBT simulator transformed how I approached MTH 201. Learning to pace myself under pressure helped me achieve an 'A' grade in the semester finals.”
+          </p>
+          <div class="quote-author">Emmanuel O.</div>
+          <div class="quote-dept">Mechanical Engineering · SEET</div>
+        </div>
+
+        <div class="quote-block">
+          <p class="quote-body">
+            “The step-by-step solutions for PHY 101 broke down complex vectors far better than standard lecture slides. My mock scores steadily climbed into the top 5% of my level.”
+          </p>
+          <div class="quote-author">Blessing A.</div>
+          <div class="quote-dept">Computer Science · SICT</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Direct Call to Action ─── -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Ready to Begin Your Study Session?</h2>
+        <p>
+          Create your free student account or sign in to launch timed exams, upload materials, and record your performance history.
         </p>
-        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
           <a href="app/index.html#signup" class="btn btn-primary btn-lg">Create Free Account</a>
-          <a href="app/index.html#signin" class="btn btn-secondary btn-lg">Sign In to Account</a>
+          <a href="app/index.html#signin" class="btn btn-secondary btn-lg">Sign In</a>
         </div>
       </div>
     </div>
@@ -375,19 +259,19 @@ svg { max-width: 100%; display: inline-block; vertical-align: middle; }
 
 <footer class="footer">
   <div class="container">
-    <div class="footer-nav">
-      <a href="index.html" class="footer-link">Home</a>
-      <a href="courses.html" class="footer-link">Courses</a>
-      <a href="cbt-practice.html" class="footer-link">CBT Simulator</a>
-      <a href="cgpa-calculator.html" class="footer-link">CGPA Calculator</a>
-      <a href="about.html" class="footer-link">About NIFES</a>
-      <a href="app/index.html#signin" class="footer-link">Sign In</a>
-      <a href="app/index.html#signup" class="footer-link">Sign Up</a>
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="index.html" class="footer-link">Home</a>
+        <a href="courses.html" class="footer-link">Courses</a>
+        <a href="cbt-practice.html" class="footer-link">CBT Simulator</a>
+        <a href="cgpa-calculator.html" class="footer-link">CGPA Calculator</a>
+        <a href="about.html" class="footer-link">About NIFES</a>
+        <a href="app/index.html#signin" class="footer-link">Sign In</a>
+      </div>
+      <div class="footer-credit">
+        © 2026 NIFES Study Hub · Federal University of Technology, Minna · Built by <a href="https://github.com/debugAyo" target="_blank">DebugAyo</a>
+      </div>
     </div>
-    <p>© 2026 NIFES Study Hub — Federal University of Technology, Minna (FUT Minna)</p>
-    <p style="margin-top:8px;font-size:0.8rem;color:var(--color-text-faint)">
-      Curated with ❤️ by the Academic Commission • Built by <a href="https://github.com/debugAyo" target="_blank">DebugAyo</a>
-    </p>
   </div>
 </footer>
 
@@ -428,12 +312,6 @@ function toggleMobileNav() {
     mobile.classList.toggle('open');
   }
 }
-
-// Nav shadow on scroll
-var nav = document.getElementById('nav');
-window.addEventListener('scroll', function() {
-  nav.classList.toggle('scrolled', window.scrollY > 20);
-});
 
 // Service Worker for background caching
 if ('serviceWorker' in navigator) {

@@ -611,7 +611,7 @@ async function handleGoogleSignIn() {
 
 /* ─── Admin View ──────────────────────────────────── */
 function renderAdminView() {
-  renderAdminUsers();
+  renderAdminModeration();
 }
 
 function switchAdminTab(tab) {
@@ -620,9 +620,90 @@ function switchAdminTab(tab) {
   var tabBtn = document.querySelector('#view-admin .tab[data-tab="admin-' + tab + '"]');
   if (tabBtn) tabBtn.classList.add('active');
   document.getElementById('tab-admin-' + tab).classList.add('active');
+  if (tab === 'moderation') renderAdminModeration();
   if (tab === 'users') renderAdminUsers();
   if (tab === 'questions') renderAdminQuestions();
   if (tab === 'materials') renderAdminMaterials();
+}
+
+async function renderAdminModeration() {
+  var list = document.getElementById('adminModerationList');
+  if (!list) return;
+  showContainerLoading('adminModerationList');
+
+  var pQuestions = await dbFetchPendingItems('questions');
+  var pMaterials = await dbFetchPendingItems('materials');
+
+  var qItems = pQuestions.data || [];
+  var mItems = pMaterials.data || [];
+
+  if (!qItems.length && !mItems.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center"><p style="color:var(--color-text-muted)">✓ All uploaded content is reviewed. No pending items!</p></div>';
+    return;
+  }
+
+  var html = '<div style="display:flex;flex-direction:column;gap:18px">';
+
+  if (qItems.length) {
+    html += '<h3 style="font-size:var(--text-sm);font-weight:700;color:var(--color-primary)">Pending Past Questions (' + qItems.length + ')</h3>';
+    html += '<table class="admin-table"><thead><tr><th>Course</th><th>Level</th><th>Question Preview</th><th>Actions</th></tr></thead><tbody>';
+    html += qItems.map(function(q) {
+      return '<tr>' +
+        '<td><strong>' + sanitize(q.course) + '</strong> (' + sanitize(q.code || '') + ')</td>' +
+        '<td>' + sanitize(q.level) + 'L</td>' +
+        '<td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + sanitize(q.question) + '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn-approve" onclick="handleApproveItem(\'questions\',' + q.id + ')" style="margin-right:6px">Approve ✓</button>' +
+          '<button class="btn-reject" onclick="handleRejectItem(\'questions\',' + q.id + ')">Reject ✕</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+    html += '</tbody></table>';
+  }
+
+  if (mItems.length) {
+    html += '<h3 style="font-size:var(--text-sm);font-weight:700;color:var(--color-primary);margin-top:12px">Pending Files & Notes (' + mItems.length + ')</h3>';
+    html += '<table class="admin-table"><thead><tr><th>Title</th><th>Course</th><th>Type</th><th>File</th><th>Actions</th></tr></thead><tbody>';
+    html += mItems.map(function(m) {
+      return '<tr>' +
+        '<td><strong>' + sanitize(m.title) + '</strong></td>' +
+        '<td>' + sanitize(m.course) + ' (' + sanitize(m.level) + 'L)</td>' +
+        '<td>' + sanitize(m.type) + '</td>' +
+        '<td><a href="' + encodeURI(m.file_url) + '" target="_blank" style="color:var(--color-primary);font-size:var(--text-xs)">View Attachment ↗</a></td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn-approve" onclick="handleApproveItem(\'materials\',' + m.id + ')" style="margin-right:6px">Approve ✓</button>' +
+          '<button class="btn-reject" onclick="handleRejectItem(\'materials\',' + m.id + ')">Reject ✕</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+    html += '</tbody></table>';
+  }
+
+  html += '</div>';
+  list.innerHTML = html;
+}
+
+async function handleApproveItem(table, id) {
+  var res = await dbApproveItem(table, id);
+  if (res.success) {
+    showToast('success', 'Item approved & published publicly.');
+    renderAdminModeration();
+    refreshQuestions();
+    refreshMaterials();
+  } else {
+    showToast('error', res.error || 'Failed to approve item.');
+  }
+}
+
+async function handleRejectItem(table, id) {
+  if (!confirm('Reject this item? It will be archived and hidden from public study view.')) return;
+  var res = await dbRejectItem(table, id);
+  if (res.success) {
+    showToast('info', 'Item rejected.');
+    renderAdminModeration();
+  } else {
+    showToast('error', res.error || 'Failed to reject item.');
+  }
 }
 
 function renderAdminUsers() {
@@ -689,9 +770,10 @@ function renderDashboard() {
   if (g) g.textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 
   document.getElementById('kpi-total').textContent = questions.length;
-  ['100', '200', '300'].forEach(function(l) {
+  ['100', '200', '300', '400', '500'].forEach(function(l) {
     var n = questions.filter(function(q) { return q.level === l; }).length;
-    document.getElementById('kpi-' + l).textContent = n;
+    var el = document.getElementById('kpi-' + l);
+    if (el) el.textContent = n;
   });
 
   var courses = {};
@@ -1992,7 +2074,7 @@ function handleSearch(val) {
 
 /* ─── Badges ──────────────────────────────────────── */
 function updateBadges() {
-  ['100', '200', '300'].forEach(function(l) {
+  ['100', '200', '300', '400', '500'].forEach(function(l) {
     var n = questions.filter(function(q) { return q.level === l; }).length;
     var el = document.getElementById('badge-' + l);
     if (el) el.textContent = n;
