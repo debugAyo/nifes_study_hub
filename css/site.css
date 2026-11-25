@@ -622,6 +622,102 @@ svg {
   padding: 8px;
 }
 
+/* ─── Secondary Pages Compatibility & Layout Components ─── */
+.page-header {
+  padding: 44px 0 28px;
+  border-bottom: var(--border-rule);
+  margin-bottom: 36px;
+}
+
+.page-header-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sage);
+  margin-bottom: 8px;
+}
+
+.page-header h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  max-width: 640px;
+  line-height: 1.65;
+}
+
+.card {
+  background: var(--paper-bright);
+  border: var(--border-rule);
+  border-radius: var(--radius-xs);
+  padding: 24px;
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  border-color: var(--ink-soft);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 22px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 18px;
+}
+
+.icon-box, .step-icon-box, .feature-icon-box, .tool-icon {
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper-darker);
+  color: var(--sage);
+  border: var(--border-rule);
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+
+.calc-layout-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .calc-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .nav-toggle span {
   display: block;
   width: 18px;

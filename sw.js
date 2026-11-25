@@ -2,7 +2,7 @@
    NIFES Study Hub — Service Worker (PWA Offline Engine)
    ══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'nifes-study-hub-v2.2.0';
+const CACHE_NAME = 'nifes-study-hub-v3.0.0';
 const CORE_ASSETS = [
   '/',
   '/index.html',
