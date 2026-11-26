@@ -6,19 +6,29 @@
 <title>NIFES Study Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="manifest" href="../manifest.json">
-<meta name="theme-color" content="#0d5c3a">
+<meta name="theme-color" content="#f6f4ee">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NIFES Hub">
+<script>
+// Normalize legacy /index.html URLs cleanly without redirect loops
+if (window.location.pathname.endsWith('/index.html')) {
+  var clean = window.location.pathname.replace(/\/index\.html$/, '') || '/';
+  window.history.replaceState(null, '', clean + window.location.search + window.location.hash);
+}
+</script>
 <style>
 /* Critical SVG and icon size constraints */
 svg { max-width: 100%; vertical-align: middle; }
 .icon, svg.icon { width: 18px !important; height: 18px !important; max-width: 18px !important; max-height: 18px !important; display: inline-block !important; vertical-align: middle !important; flex-shrink: 0 !important; }
-.logo-mark { width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; flex-shrink: 0 !important; display: block !important; }
-.auth-page-logo svg { width: 36px !important; height: 36px !important; max-width: 36px !important; max-height: 36px !important; flex-shrink: 0 !important; }
+.logo-icon-box { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: var(--sage-light); color: var(--sage); border: 1px solid var(--paper-ruled); border-radius: 2px; flex-shrink: 0; }
+.auth-page-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.auth-page-logo-icon { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; background: var(--sage-light); color: var(--sage); border: 1px solid var(--paper-ruled); border-radius: 2px; flex-shrink: 0; }
+.auth-page-logo-text { font-family: var(--font-sans); font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; color: var(--ink); }
+.auth-page-logo-text span { font-family: var(--font-serif); font-weight: 400; font-style: italic; color: var(--sage); }
 </style>
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -29,10 +39,12 @@ svg { max-width: 100%; vertical-align: middle; }
 <div class="auth-page" id="authPage">
   <div class="auth-page-inner">
     <div class="auth-page-logo">
-      <svg width="36" height="36" viewBox="0 0 32 32" fill="none" aria-label="NIFES Study Hub logo">
-        <rect width="32" height="32" rx="8" fill="var(--color-primary)"/>
-        <path d="M8 22V10l6 8V10M18 10v12h6c0-3-1-4-3-4s-3-1-3-4c0-2 1-4 3-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <div class="auth-page-logo-icon">
+        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          <path d="m9 9 2 2 4-4"/>
+        </svg>
+      </div>
       <span class="auth-page-logo-text">NIFES <span>Study Hub</span></span>
     </div>
     <h1 class="auth-page-title">Welcome Back</h1>
@@ -119,7 +131,7 @@ svg { max-width: 100%; vertical-align: middle; }
 
 
     <p class="auth-page-footer">
-      <a href="../index.html" class="auth-page-back">← Back to landing page</a>
+      <a href="/" class="auth-page-back">← Back to landing page</a>
     </p>
   </div>
 </div>
@@ -134,12 +146,14 @@ svg { max-width: 100%; vertical-align: middle; }
 <div class="app" id="appContainer" style="display:none">
   <!-- ═══ HEADER ═══ -->
   <header class="header">
-    <a href="#" class="logo" onclick="navigate('dashboard');return false;">
-      <svg class="logo-mark" width="32" height="32" style="width:32px;height:32px;max-width:32px;max-height:32px;" viewBox="0 0 32 32" fill="none" aria-label="NIFES Study Hub logo">
-        <rect width="32" height="32" rx="8" fill="var(--color-primary)"/>
-        <path d="M8 22V10l6 8V10M18 10v12h6c0-3-1-4-3-4s-3-1-3-4c0-2 1-4 3-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span class="logo-text">NIFES <span>Study Hub</span></span>
+    <a href="#" class="logo" onclick="navigate('dashboard');return false;" style="display:flex;align-items:center;gap:10px">
+      <div class="logo-icon-box">
+        <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          <path d="m9 9 2 2 4-4"/>
+        </svg>
+      </div>
+      <span class="logo-text" style="font-family:var(--font-sans);font-weight:700;font-size:1.05rem;letter-spacing:-0.01em;color:var(--ink)">NIFES <span style="font-family:var(--font-serif);font-weight:400;font-style:italic;color:var(--sage)">Study Hub</span></span>
     </a>
     <div class="search-wrap" id="searchWrap" style="display:none">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>

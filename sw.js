@@ -2,7 +2,7 @@
    NIFES Study Hub — Service Worker (PWA Offline Engine)
    ══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'nifes-study-hub-v3.1.0';
+const CACHE_NAME = 'nifes-study-hub-v3.2.0';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -10,6 +10,7 @@ const CORE_ASSETS = [
   '/favicon.svg',
   '/404.html',
   '/app',
+  '/app/index.html',
   '/app/css/styles.css',
   '/app/js/config.js',
   '/app/js/seed.js',
@@ -33,7 +34,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate: clean up older caches
+// Activate: clean up older caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -49,17 +50,17 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Stale-While-Revalidate for app assets, Network-First for Navigation & APIs
+// Fetch: Stale-While-Revalidate for app assets, Safe Network-First for Navigation & APIs
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Skip non-GET requests or browser-extension schemes
+  // Skip non-GET requests or non-HTTP schemes
   if (req.method !== 'GET' || !url.protocol.startsWith('http')) {
     return;
   }
 
-  // API calls to Supabase or custom backend: network first, no offline cache corruption
+  // API calls to Supabase or backend: network first, no offline cache corruption
   if (url.hostname.includes('supabase.co') || url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(req).catch(() => {
@@ -72,25 +73,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation requests (HTML pages): Network-First to follow redirects without ERR_FAILED
+  // Navigation requests (HTML pages): Safe async resolver
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const resClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(req, resClone);
-          });
+      (async () => {
+        try {
+          const networkResponse = await fetch(req);
+          if (networkResponse && networkResponse.status === 200) {
+            const resClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
+          }
+          return networkResponse;
+        } catch (err) {
+          const cached = await caches.match(req);
+          if (cached) return cached;
+          if (url.pathname.startsWith('/app')) {
+            return (await caches.match('/app')) || (await caches.match('/app/index.html'));
+          }
+          return (await caches.match('/')) || (await caches.match('/index.html'));
         }
-        return networkResponse;
-      }).catch(async () => {
-        const cached = await caches.match(req);
-        if (cached) return cached;
-        if (url.pathname.startsWith('/app')) {
-          return (await caches.match('/app')) || (await caches.match('/app/index.html'));
-        }
-        return (await caches.match('/')) || (await caches.match('/index.html'));
-      })
+      })()
     );
     return;
   }

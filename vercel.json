@@ -3,14 +3,18 @@
   "framework": null,
   "buildCommand": "node scripts/inject-env.js",
   "outputDirectory": ".",
-  "cleanUrls": true,
+  "cleanUrls": false,
   "rewrites": [
     { "source": "/sw.js", "destination": "/sw.js" },
     { "source": "/manifest.json", "destination": "/manifest.json" },
     { "source": "/favicon.svg", "destination": "/favicon.svg" },
     { "source": "/app", "destination": "/app/index.html" },
     { "source": "/app/", "destination": "/app/index.html" },
-    { "source": "/app/(.*)", "destination": "/app/$1" }
+    { "source": "/app/(.*)", "destination": "/app/$1" },
+    { "source": "/courses", "destination": "/courses.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/cbt-practice", "destination": "/cbt-practice.html" },
+    { "source": "/cgpa-calculator", "destination": "/cgpa-calculator.html" }
   ],
   "headers": [
     {
