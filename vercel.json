@@ -11,6 +11,8 @@
     { "source": "/app", "destination": "/app/index.html" },
     { "source": "/app/", "destination": "/app/index.html" },
     { "source": "/app/(.*)", "destination": "/app/$1" },
+    { "source": "/css/styles.css", "destination": "/app/css/styles.css" },
+    { "source": "/js/(.*)", "destination": "/app/js/$1" },
     { "source": "/courses", "destination": "/courses.html" },
     { "source": "/about", "destination": "/about.html" },
     { "source": "/cbt-practice", "destination": "/cbt-practice.html" },
