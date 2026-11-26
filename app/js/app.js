@@ -48,6 +48,10 @@ var searchVisible = false;
 var studyModeActive = false;
 var currentUser = null;
 var currentUserRole = 'user';
+var currentUserProfile = null;
+var currentProfileFilter = 'all';
+var currentProfileSort = 'newest';
+var currentProfileSearch = '';
 var bookmarkedIds = {};
 var bookmarkFilterActive = false;
 var pqPage = 1;
@@ -271,18 +275,34 @@ function resetFieldValidation(el) {
   el.classList.remove('error', 'success');
 }
 
+/* ─── Effective Avatar Helper ─────────────────────── */
+function getEffectiveAvatarUrl() {
+  if (!currentUser) return null;
+  return currentUserProfile?.avatar_url ||
+         currentUser.user_metadata?.avatar_url ||
+         currentUser.user_metadata?.picture ||
+         localStorage.getItem('nifes_avatar_' + currentUser.id) ||
+         null;
+}
+
 /* ─── Auth UI ─────────────────────────────────────── */
 function updateAuthUI() {
   var container = document.getElementById('authContainer');
   if (!container) return;
   if (currentUser) {
-    var name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
+    var name = currentUserProfile?.full_name || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
     var initial = name.charAt(0).toUpperCase();
     var safeName = sanitize(name);
+    var avatarUrl = getEffectiveAvatarUrl();
+    var avatarHtml = avatarUrl
+      ? '<img src="' + sanitize(avatarUrl) + '" alt="' + safeName + '" onerror="this.remove();">'
+      : sanitize(initial);
+
     var adminLink = currentUserRole === 'admin' || currentUserRole === 'superuser'
       ? '<button onclick="navigate(\'admin\');toggleUserMenu()">Admin Panel</button>' : '';
-    container.innerHTML = '<div class="user-badge" onclick="toggleUserMenu()">' +
-      '<div class="user-avatar">' + sanitize(initial) + '</div>' +
+
+    container.innerHTML = '<div class="user-badge" onclick="toggleUserMenu()" title="Account Options">' +
+      '<div class="user-avatar">' + avatarHtml + '</div>' +
       '<span class="user-name">' + safeName + '</span></div>' +
       '<div class="user-dropdown" id="userDropdown">' +
       '<button onclick="navigate(\'profile\');toggleUserMenu()">My Profile</button>' +
@@ -302,12 +322,13 @@ async function handleSignOut() {
   localStorage.removeItem('nifes_guest_mode');
   await dbSignOut();
   currentUser = null;
+  currentUserProfile = null;
   currentUserRole = 'user';
   bookmarkedIds = {};
   updateAuthUI();
   var el = document.getElementById('userDropdown');
   if (el) el.classList.remove('show');
-  window.location.href = '../index.html';
+  window.location.href = '/';
 }
 
 function showAuthPage() {
@@ -323,7 +344,13 @@ async function hideAuthPage() {
   updateAuthUI();
   if (currentUser) {
     var pRes = await dbGetProfile(currentUser.id);
-    currentUserRole = pRes.data?.role || 'user';
+    if (pRes.success && pRes.data) {
+      currentUserProfile = pRes.data;
+      currentUserRole = pRes.data.role || 'user';
+    } else {
+      currentUserRole = 'user';
+    }
+    updateAuthUI();
     var bRes = await dbFetchBookmarks();
     if (bRes.success) {
       bookmarkedIds = {};
@@ -339,31 +366,297 @@ async function hideAuthPage() {
 }
 
 function closeAuthModal() {
-  window.location.href = '../index.html';
+  window.location.href = '/';
 }
 
-function renderProfileView() {
+/* ─── Scholar Profile & Moderation Ledger ─────────── */
+async function renderProfileView() {
   if (!currentUser) return;
-  var name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
+
+  var pRes = await dbGetProfile(currentUser.id);
+  if (pRes.success && pRes.data) {
+    currentUserProfile = pRes.data;
+    if (pRes.data.role) currentUserRole = pRes.data.role;
+  }
+
+  var name = currentUserProfile?.full_name || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Scholar';
   var initial = name.charAt(0).toUpperCase();
-  document.getElementById('profileAvatar').innerHTML = '<div class="profile-avatar-circle">' + sanitize(initial) + '</div>';
-  document.getElementById('profileName').textContent = sanitize(name);
-  document.getElementById('profileEmail').textContent = currentUser.email || '';
-  document.getElementById('profileRole').textContent = 'Role: ' + currentUserRole;
+  var avatarUrl = getEffectiveAvatarUrl();
+
+  var avatarContainer = document.getElementById('profileAvatarContainer');
+  if (avatarContainer) {
+    if (avatarUrl) {
+      avatarContainer.innerHTML = '<img src="' + sanitize(avatarUrl) + '" id="profileAvatarImg" alt="Profile avatar" onerror="this.outerHTML=\'<div class=\\\'profile-avatar-circle\\\'>' + sanitize(initial) + '</div>\';">';
+    } else {
+      avatarContainer.innerHTML = '<div class="profile-avatar-circle" id="profileAvatarCircle">' + sanitize(initial) + '</div>';
+    }
+  }
+
+  var btnReset = document.getElementById('btnResetAvatar');
+  if (btnReset) {
+    btnReset.style.display = avatarUrl ? 'inline-block' : 'none';
+  }
+
+  var nameInput = document.getElementById('profileFullNameInput');
+  if (nameInput) nameInput.value = name;
+
+  var emailDisplay = document.getElementById('profileEmailDisplay');
+  if (emailDisplay) emailDisplay.value = currentUser.email || '';
+
+  var deptInput = document.getElementById('profileDeptInput');
+  if (deptInput) deptInput.value = currentUserProfile?.department || '';
+
+  var levelSelect = document.getElementById('profileLevelSelect');
+  if (levelSelect) levelSelect.value = currentUserProfile?.level || '100';
+
+  var roleBadge = document.getElementById('profileRoleBadge');
+  if (roleBadge) {
+    var roleLabel = currentUserRole === 'superuser' ? 'Executive Superuser' : (currentUserRole === 'admin' ? 'Academic Admin' : 'Student Scholar');
+    roleBadge.textContent = roleLabel;
+    roleBadge.className = 'badge ' + (currentUserRole === 'user' ? 'badge-primary' : 'badge-amber');
+  }
 
   var myQs = questions.filter(function(q) { return q.user_id === currentUser.id; });
-  document.getElementById('profileStats').innerHTML =
-    '<div class="profile-stat"><strong>' + myQs.length + '</strong> questions contributed</div>';
+  var approvedCount = myQs.filter(function(q) { return q.status === 'approved'; }).length;
+  var pendingCount = myQs.filter(function(q) { return !q.status || q.status === 'pending'; }).length;
+  var rejectedCount = myQs.filter(function(q) { return q.status === 'rejected'; }).length;
 
+  var statTotal = document.getElementById('statProfileTotal');
+  var statApp = document.getElementById('statProfileApproved');
+  var statPend = document.getElementById('statProfilePending');
+  var statRej = document.getElementById('statProfileRejected');
+
+  if (statTotal) statTotal.textContent = myQs.length;
+  if (statApp) statApp.textContent = approvedCount;
+  if (statPend) statPend.textContent = pendingCount;
+  if (statRej) statRej.textContent = rejectedCount;
+
+  var fcAll = document.getElementById('filterCountAll');
+  var fcApp = document.getElementById('filterCountApproved');
+  var fcPend = document.getElementById('filterCountPending');
+  var fcRej = document.getElementById('filterCountRejected');
+
+  if (fcAll) fcAll.textContent = myQs.length;
+  if (fcApp) fcApp.textContent = approvedCount;
+  if (fcPend) fcPend.textContent = pendingCount;
+  if (fcRej) fcRej.textContent = rejectedCount;
+
+  renderProfileQuestions();
+}
+
+function setProfileFilter(filter) {
+  currentProfileFilter = filter;
+  document.querySelectorAll('#profileFilterPills .pill-filter').forEach(function(pill) {
+    if (pill.getAttribute('data-filter') === filter) {
+      pill.classList.add('active');
+    } else {
+      pill.classList.remove('active');
+    }
+  });
+  renderProfileQuestions();
+}
+
+function handleProfileSort(sortVal) {
+  currentProfileSort = sortVal;
+  renderProfileQuestions();
+}
+
+function handleProfileSearch(searchVal) {
+  currentProfileSearch = (searchVal || '').trim().toLowerCase();
+  renderProfileQuestions();
+}
+
+function renderProfileQuestions() {
+  if (!currentUser) return;
   var list = document.getElementById('myQuestionsList');
-  if (myQs.length) {
-    list.innerHTML = myQs.map(function(q) {
-      return '<div class="pq-item"><div class="pq-item-header"><div class="pq-meta"><span class="tag tag-type">' + sanitize(q.type) + '</span></div>' +
-        '<span style="font-size:var(--text-xs);color:var(--color-text-faint)">' + sanitize(q.course) + '</span></div>' +
-        '<p class="pq-question">' + sanitize(q.question) + '</p></div>';
-    }).join('');
+  if (!list) return;
+
+  var myQs = questions.filter(function(q) { return q.user_id === currentUser.id; });
+
+  if (currentProfileFilter === 'approved') {
+    myQs = myQs.filter(function(q) { return q.status === 'approved'; });
+  } else if (currentProfileFilter === 'pending') {
+    myQs = myQs.filter(function(q) { return !q.status || q.status === 'pending'; });
+  } else if (currentProfileFilter === 'rejected') {
+    myQs = myQs.filter(function(q) { return q.status === 'rejected'; });
+  }
+
+  if (currentProfileSearch) {
+    myQs = myQs.filter(function(q) {
+      var course = (q.course || '').toLowerCase();
+      var text = (q.question || '').toLowerCase();
+      var topic = (q.topic || '').toLowerCase();
+      return course.includes(currentProfileSearch) || text.includes(currentProfileSearch) || topic.includes(currentProfileSearch);
+    });
+  }
+
+  myQs.sort(function(a, b) {
+    if (currentProfileSort === 'oldest') {
+      return (new Date(a.created_at || 0)) - (new Date(b.created_at || 0));
+    } else if (currentProfileSort === 'course') {
+      return (a.course || '').localeCompare(b.course || '');
+    } else {
+      return (new Date(b.created_at || 0)) - (new Date(a.created_at || 0));
+    }
+  });
+
+  if (myQs.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:40px 20px;text-align:center;border:1px dashed var(--color-border);background:var(--color-bg-alt);border-radius:var(--radius-xs)">' +
+      '<h3 style="font-family:var(--font-serif);margin-bottom:8px">No questions matching filter</h3>' +
+      '<p style="font-size:var(--text-sm);color:var(--color-text-muted);margin:0">Contribute new questions or adjust your status and keyword filters.</p>' +
+      '</div>';
+    return;
+  }
+
+  list.innerHTML = myQs.map(function(q) {
+    var status = q.status || 'pending';
+    var statusBadge = '';
+    if (status === 'approved') {
+      statusBadge = '<span class="status-badge approved" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;font-weight:600;background:var(--sage-light);color:var(--sage);border:1px solid var(--sage);border-radius:2px">✓ Approved & Live</span>';
+    } else if (status === 'rejected') {
+      statusBadge = '<span class="status-badge rejected" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;font-weight:600;background:var(--red-light);color:var(--red);border:1px solid var(--red);border-radius:2px">✕ Needs Revision</span>';
+    } else {
+      statusBadge = '<span class="status-badge pending" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;font-weight:600;background:var(--amber-light);color:var(--amber);border:1px solid var(--amber);border-radius:2px">⏳ Under Review</span>';
+    }
+
+    var levelBadge = q.level ? '<span class="tag tag-level" style="font-size:11px;padding:2px 6px;margin-right:6px">' + sanitize(q.level) + 'L</span>' : '';
+    var dateStr = q.created_at ? new Date(q.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+    return '<div class="pq-item" style="border:1px solid var(--paper-ruled);background:var(--paper-bright);padding:16px;border-radius:2px;margin-bottom:12px">' +
+      '<div class="pq-item-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          levelBadge +
+          '<strong style="font-family:var(--font-mono);font-size:var(--text-sm)">' + sanitize(q.course) + '</strong>' +
+          '<span class="tag tag-type" style="font-size:11px;padding:2px 6px">' + sanitize(q.type || 'MCQ') + '</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          (dateStr ? '<span style="font-size:11px;color:var(--color-text-faint)">' + dateStr + '</span>' : '') +
+          statusBadge +
+        '</div>' +
+      '</div>' +
+      '<p class="pq-question" style="font-size:var(--text-base);margin:8px 0 12px;line-height:1.5">' + sanitize(q.question) + '</p>' +
+      (q.explanation ? '<p style="font-size:var(--text-xs);color:var(--color-text-muted);background:var(--color-bg);padding:8px 12px;border-left:2px solid var(--sage);margin:0"><strong>Answer Reference:</strong> ' + sanitize(q.explanation) + '</p>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function openAvatarModal() {
+  var avatarUrl = getEffectiveAvatarUrl();
+  var modal = document.getElementById('avatarModal');
+  var container = document.getElementById('avatarModalImageContainer');
+  if (!modal || !container) return;
+
+  if (avatarUrl) {
+    container.innerHTML = '<img src="' + sanitize(avatarUrl) + '" style="max-width:240px;max-height:240px;border-radius:50%;border:3px solid var(--paper-ruled);object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,0.15)">';
   } else {
-    list.innerHTML = '<div class="empty-state"><h3>No questions yet</h3><p>Contribute a question from the Add Question page.</p></div>';
+    var name = currentUserProfile?.full_name || currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'User';
+    var initial = name.charAt(0).toUpperCase();
+    container.innerHTML = '<div class="profile-avatar-circle" style="width:140px;height:140px;border-radius:50%;font-size:3.5rem">' + sanitize(initial) + '</div>';
+  }
+  modal.style.display = 'flex';
+}
+
+function closeAvatarModal() {
+  var modal = document.getElementById('avatarModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function handleAvatarFileSelect(e) {
+  var file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Image file is too large. Please select an image under 2MB.');
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = async function(evt) {
+    var base64Data = evt.target.result;
+    if (!currentUser) return;
+
+    localStorage.setItem('nifes_avatar_' + currentUser.id, base64Data);
+    if (!currentUserProfile) currentUserProfile = {};
+    currentUserProfile.avatar_url = base64Data;
+
+    await dbUpdateProfile(currentUser.id, { avatar_url: base64Data });
+
+    updateAuthUI();
+    renderProfileView();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleResetAvatar() {
+  if (!confirm('Reset your profile avatar to the default monogram?')) return;
+  if (!currentUser) return;
+
+  localStorage.removeItem('nifes_avatar_' + currentUser.id);
+  if (currentUserProfile) currentUserProfile.avatar_url = null;
+
+  await dbUpdateProfile(currentUser.id, { avatar_url: '' });
+  updateAuthUI();
+  renderProfileView();
+}
+
+async function handleSaveProfile(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!currentUser) return;
+
+  var btn = document.getElementById('btnSaveProfile');
+  var alertEl = document.getElementById('profileSaveAlert');
+  if (alertEl) { alertEl.className = 'auth-msg'; alertEl.style.display = 'none'; alertEl.textContent = ''; }
+
+  var fullName = document.getElementById('profileFullNameInput')?.value.trim();
+  var dept = document.getElementById('profileDeptInput')?.value.trim();
+  var level = document.getElementById('profileLevelSelect')?.value;
+
+  if (!fullName) {
+    if (alertEl) {
+      alertEl.textContent = 'Please enter your full name.';
+      alertEl.className = 'auth-msg auth-error show';
+      alertEl.style.display = 'block';
+    }
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Saving…';
+  }
+
+  var res = await dbUpdateProfile(currentUser.id, {
+    full_name: fullName,
+    department: dept,
+    level: level
+  });
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Save Profile Changes';
+  }
+
+  if (res.success) {
+    if (!currentUserProfile) currentUserProfile = {};
+    currentUserProfile.full_name = fullName;
+    currentUserProfile.department = dept;
+    currentUserProfile.level = level;
+
+    if (alertEl) {
+      alertEl.textContent = 'Profile successfully updated!';
+      alertEl.className = 'auth-msg auth-success show';
+      alertEl.style.display = 'block';
+      setTimeout(function() {
+        if (alertEl) alertEl.style.display = 'none';
+      }, 3500);
+    }
+    updateAuthUI();
+  } else {
+    if (alertEl) {
+      alertEl.textContent = res.error || 'Failed to save profile changes.';
+      alertEl.className = 'auth-msg auth-error show';
+      alertEl.style.display = 'block';
+    }
   }
 }
 

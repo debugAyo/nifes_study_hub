@@ -2,15 +2,14 @@
    NIFES Study Hub — Service Worker (PWA Offline Engine)
    ══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'nifes-study-hub-v3.0.0';
+const CACHE_NAME = 'nifes-study-hub-v3.1.0';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/favicon.svg',
   '/404.html',
-  '/app/',
-  '/app/index.html',
+  '/app',
   '/app/css/styles.css',
   '/app/js/config.js',
   '/app/js/seed.js',
@@ -23,7 +22,6 @@ const CORE_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Use addAll with error resilience so one 404 does not fail installation
       return Promise.allSettled(
         CORE_ASSETS.map((url) =>
           cache.add(url).catch((err) => {
@@ -51,7 +49,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Stale-While-Revalidate for app assets, Network-First for APIs
+// Fetch: Stale-While-Revalidate for app assets, Network-First for Navigation & APIs
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
@@ -74,7 +72,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell and static assets: Stale-While-Revalidate
+  // Navigation requests (HTML pages): Network-First to follow redirects without ERR_FAILED
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const resClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(req, resClone);
+          });
+        }
+        return networkResponse;
+      }).catch(async () => {
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        if (url.pathname.startsWith('/app')) {
+          return (await caches.match('/app')) || (await caches.match('/app/index.html'));
+        }
+        return (await caches.match('/')) || (await caches.match('/index.html'));
+      })
+    );
+    return;
+  }
+
+  // App shell and static assets (CSS, JS, images, fonts): Stale-While-Revalidate
   event.respondWith(
     caches.match(req).then((cachedResponse) => {
       const fetchPromise = fetch(req).then((networkResponse) => {
@@ -86,10 +107,7 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch((err) => {
-        // If network failed and we have no cached asset, fallback to /app/index.html for navigation
-        if (req.mode === 'navigate') {
-          return caches.match('/app/index.html');
-        }
+        if (cachedResponse) return cachedResponse;
         throw err;
       });
 

@@ -77,3 +77,16 @@ create policy "materials_read_approved"
     or user_id = auth.uid()
     or public.is_admin_or_superuser(auth.uid())
   );
+
+-- 7. Add Profile Customization Columns (Avatar, Department, Level)
+alter table if exists public.profiles add column if not exists avatar_url text;
+alter table if exists public.profiles add column if not exists department text;
+alter table if exists public.profiles add column if not exists level text check (level in ('100', '200', '300', '400', '500'));
+alter table if exists public.profiles add column if not exists updated_at timestamptz default now();
+
+-- Ensure users can update their own profile columns
+drop policy if exists "profiles_self_update" on profiles;
+create policy "profiles_self_update"
+  on profiles for update
+  using (auth.uid() = id);
+

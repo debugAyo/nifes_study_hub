@@ -234,6 +234,13 @@ svg { max-width: 100%; vertical-align: middle; }
         CGPA Calculator
       </button>
     </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Account</div>
+      <button class="nav-item" onclick="navigate('profile')" id="nav-profile">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        My Profile
+      </button>
+    </div>
     <div class="nav-section" id="navAdminSection" style="display:none">
       <div class="nav-section-title">Administration</div>
       <button class="nav-item" onclick="navigate('admin')" id="nav-admin">
@@ -1097,19 +1104,152 @@ svg { max-width: 100%; vertical-align: middle; }
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
         Back to Dashboard
       </button>
-      <h1 class="page-title">My Profile</h1>
-      <p class="page-subtitle">Your account information and activity.</p>
-      <div class="profile-card">
-        <div class="profile-avatar" id="profileAvatar"></div>
-        <div class="profile-name" id="profileName"></div>
-        <div class="profile-email" id="profileEmail"></div>
-        <div class="profile-role" id="profileRole"></div>
-        <div class="profile-stats" id="profileStats"></div>
+
+      <div class="profile-header-wrap">
+        <h1 class="page-title">Scholar Profile</h1>
+        <p class="page-subtitle">Academic identity, avatar credentials, and moderation ledger.</p>
       </div>
-      <div class="profile-questions" id="profileQuestions">
-        <h2 class="section-heading">My Questions</h2>
-        <p class="section-desc">Questions you've contributed to the hub.</p>
-        <div class="pq-list" id="myQuestionsList"></div>
+
+      <div class="profile-grid">
+        <!-- Profile Identity & Settings Card -->
+        <div class="profile-card profile-card-main">
+          <div class="profile-avatar-section">
+            <div class="profile-avatar-frame" id="profileAvatarContainer" onclick="openAvatarModal()" title="Click to inspect profile image">
+              <div class="profile-avatar-circle" id="profileAvatarCircle">?</div>
+            </div>
+            <div class="profile-avatar-actions">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload Avatar</span>
+                <input type="file" id="profileAvatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarFileSelect(event)">
+              </label>
+              <button type="button" class="btn-ghost btn-sm" id="btnResetAvatar" onclick="handleResetAvatar()" style="font-size:var(--text-xs);display:none;margin-top:4px">Reset to Default</button>
+              <span class="form-hint" style="font-size:11px;margin-top:4px">JPG, PNG, or WebP. Max 2MB.</span>
+            </div>
+          </div>
+
+          <form id="profileEditForm" onsubmit="handleSaveProfile(event)" class="profile-form">
+            <div class="form-group">
+              <label class="form-label" for="profileFullNameInput">Full Name</label>
+              <input type="text" class="input" id="profileFullNameInput" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="profileEmailDisplay">University / Fellowship Email</label>
+              <div style="position:relative">
+                <input type="email" class="input" id="profileEmailDisplay" readonly style="background:var(--color-bg-alt);cursor:not-allowed;padding-right:90px">
+                <span class="badge" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;text-transform:uppercase;letter-spacing:0.04em;background:var(--color-primary-light);color:var(--color-primary)">Verified</span>
+              </div>
+            </div>
+
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group">
+                <label class="form-label" for="profileDeptInput">Department / Program</label>
+                <input type="text" class="input" id="profileDeptInput" placeholder="e.g. Computer Science">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profileLevelSelect">Current Level</label>
+                <select class="select" id="profileLevelSelect">
+                  <option value="100">100 Level</option>
+                  <option value="200">200 Level</option>
+                  <option value="300">300 Level</option>
+                  <option value="400">400 Level</option>
+                  <option value="500">500 Level</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Fellowship Role & Privileges</label>
+              <div id="profileRoleBadgeContainer">
+                <span class="badge" id="profileRoleBadge">Scholar</span>
+              </div>
+            </div>
+
+            <div id="profileSaveAlert" class="auth-msg" style="margin-bottom:12px"></div>
+
+            <button type="submit" class="btn btn-primary" id="btnSaveProfile" style="width:100%">
+              Save Profile Changes
+            </button>
+          </form>
+        </div>
+
+        <!-- Academic Contributions Ledger -->
+        <div class="profile-card profile-card-ledger">
+          <div class="ledger-header" style="margin-bottom:16px;border-bottom:1px solid var(--color-border);padding-bottom:12px">
+            <h3 style="font-family:var(--font-serif);font-size:var(--text-lg);font-weight:600;margin:0">Contributions Ledger</h3>
+            <span style="font-size:var(--text-xs);color:var(--color-text-muted)">Real-time moderation audit</span>
+          </div>
+
+          <div class="profile-stats-grid">
+            <div class="profile-stat-box">
+              <span class="profile-stat-num" id="statProfileTotal">0</span>
+              <span class="profile-stat-label">Total Submitted</span>
+            </div>
+            <div class="profile-stat-box stat-approved">
+              <span class="profile-stat-num" id="statProfileApproved">0</span>
+              <span class="profile-stat-label">Approved & Live</span>
+            </div>
+            <div class="profile-stat-box stat-pending">
+              <span class="profile-stat-num" id="statProfilePending">0</span>
+              <span class="profile-stat-label">Under Review</span>
+            </div>
+            <div class="profile-stat-box stat-rejected">
+              <span class="profile-stat-num" id="statProfileRejected">0</span>
+              <span class="profile-stat-label">Needs Revision</span>
+            </div>
+          </div>
+
+          <div class="profile-info-notice" style="margin-top:20px;padding:12px 14px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--radius-sm)">
+            <p style="font-size:var(--text-xs);color:var(--color-text-muted);margin:0;line-height:1.5">
+              <strong>Quality Assurance Protocol:</strong> All student-contributed past questions undergo executive peer moderation by fellowship academic leads before being published across 100L–500L archives.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contributed Questions with Sorting & Filtering -->
+      <div class="profile-questions-section" style="margin-top:32px">
+        <div class="profile-questions-header">
+          <div>
+            <h2 class="section-heading" style="margin-bottom:4px">My Contributed Questions</h2>
+            <p class="section-desc">Track review feedback and status of your questions.</p>
+          </div>
+
+          <div class="profile-controls-bar">
+            <!-- Filter Pills -->
+            <div class="profile-filter-pills" id="profileFilterPills">
+              <button type="button" class="pill-filter active" data-filter="all" onclick="setProfileFilter('all')">All (<span id="filterCountAll">0</span>)</button>
+              <button type="button" class="pill-filter" data-filter="approved" onclick="setProfileFilter('approved')">Approved (<span id="filterCountApproved">0</span>)</button>
+              <button type="button" class="pill-filter" data-filter="pending" onclick="setProfileFilter('pending')">Under Review (<span id="filterCountPending">0</span>)</button>
+              <button type="button" class="pill-filter" data-filter="rejected" onclick="setProfileFilter('rejected')">Needs Revision (<span id="filterCountRejected">0</span>)</button>
+            </div>
+
+            <!-- Sort & Search Bar -->
+            <div class="profile-sort-wrap">
+              <div class="search-input-wrap" style="position:relative;flex:1;min-width:180px">
+                <input type="search" class="input input-sm" id="myQuestionsSearchInput" placeholder="Filter by course or keyword…" oninput="handleProfileSearch(this.value)" style="padding-left:28px;height:34px;font-size:var(--text-xs)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--color-text-muted)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              </div>
+              <select class="select select-sm" id="myQuestionsSortSelect" onchange="handleProfileSort(this.value)" style="height:34px;font-size:var(--text-xs);min-width:140px">
+                <option value="newest">Sort: Newest First</option>
+                <option value="oldest">Sort: Oldest First</option>
+                <option value="course">Sort: Course (A–Z)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pq-list" id="myQuestionsList" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- ═══ AVATAR INSPECTION MODAL ═══ -->
+    <div class="modal-backdrop" id="avatarModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:20px" onclick="closeAvatarModal()">
+      <div class="modal-content" style="max-width:380px;background:var(--color-bg);border:1px solid var(--color-border);padding:24px;border-radius:var(--radius-md);text-align:center" onclick="event.stopPropagation()">
+        <h3 style="font-family:var(--font-serif);margin-bottom:16px">Profile Image</h3>
+        <div id="avatarModalImageContainer" style="display:flex;justify-content:center;margin-bottom:20px"></div>
+        <button type="button" class="btn btn-secondary" onclick="closeAvatarModal()" style="width:100%">Close</button>
       </div>
     </div>
 

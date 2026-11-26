@@ -195,10 +195,8 @@ async function dbSignInWithGoogle() {
   try {
     if (!supabaseClient) return { success: false, error: 'Supabase authentication is not configured.' };
     
-    var redirectTo = window.location.href.split('#')[0].split('?')[0];
-    if (!redirectTo || redirectTo === 'null' || redirectTo.startsWith('file:')) {
-      redirectTo = window.location.origin ? window.location.origin + '/app/index.html' : 'http://localhost:3000/app/index.html';
-    }
+    var origin = window.location.origin || 'https://nifes-studyhub.vercel.app';
+    var redirectTo = (origin.startsWith('file:') || origin === 'null') ? 'http://localhost:3000/app' : origin + '/app';
     
     var res = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
@@ -253,8 +251,10 @@ async function dbGetAuthToken() {
 async function dbResetPassword(email) {
   try {
     if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var origin = window.location.origin || 'https://nifes-studyhub.vercel.app';
+    var redirectTo = (origin.startsWith('file:') || origin === 'null') ? 'http://localhost:3000/app' : origin + '/app';
     var result = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/app/index.html',
+      redirectTo: redirectTo,
     });
     if (result.error) throw result.error;
     return { success: true };
@@ -281,6 +281,43 @@ async function dbGetProfile(userId) {
     return { success: true, data: result.data };
   } catch (err) {
     return { success: false, error: err.message, data: null };
+  }
+}
+
+async function dbUpdateProfile(userId, profileData) {
+  try {
+    if (!supabaseClient) return { success: false, error: 'Supabase not configured' };
+    var updates = {};
+    if (profileData.full_name !== undefined) updates.full_name = profileData.full_name;
+    if (profileData.department !== undefined) updates.department = profileData.department;
+    if (profileData.level !== undefined) updates.level = profileData.level;
+    if (profileData.avatar_url !== undefined) updates.avatar_url = profileData.avatar_url;
+
+    var result = await supabaseClient.from('profiles').update(updates).eq('id', userId);
+    
+    // Sync to auth user_metadata if full_name or avatar is updated
+    if (profileData.full_name || profileData.avatar_url) {
+      var metaUpdates = {};
+      if (profileData.full_name) metaUpdates.full_name = profileData.full_name;
+      if (profileData.avatar_url) metaUpdates.avatar_url = profileData.avatar_url;
+      await supabaseClient.auth.updateUser({ data: metaUpdates }).catch(function(e) {
+        console.warn('Could not sync user_metadata:', e);
+      });
+    }
+
+    if (result.error) {
+      // Graceful fallback if custom columns (avatar_url/department/level) are pending SQL migration
+      if (result.error.message && result.error.message.includes('column')) {
+        var fallback = await supabaseClient.from('profiles').update({ full_name: profileData.full_name }).eq('id', userId);
+        if (fallback.error) throw fallback.error;
+      } else {
+        throw result.error;
+      }
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('dbUpdateProfile error:', err);
+    return { success: false, error: err.message };
   }
 }
 
