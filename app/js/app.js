@@ -204,10 +204,20 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 /* ─── Data Loading ────────────────────────────────── */
 async function loadAllData() {
-  var results = await Promise.all([dbFetchQuestions(), dbFetchMaterials()]);
-  if (results[0].success && results[0].data.length) questions = results[0].data;
-  else questions = SEED_QUESTIONS;
-  if (results[1].success) materials = results[1].data;
+  try {
+    var results = await Promise.all([dbFetchQuestions(), dbFetchMaterials()]);
+    if (results[0] && results[0].success && results[0].data && results[0].data.length) {
+      questions = results[0].data;
+    } else {
+      questions = (typeof SEED_QUESTIONS !== 'undefined' && SEED_QUESTIONS.length) ? SEED_QUESTIONS : [];
+    }
+    if (results[1] && results[1].success && results[1].data) {
+      materials = results[1].data;
+    }
+  } catch (err) {
+    console.error('Error in loadAllData:', err);
+    if (typeof SEED_QUESTIONS !== 'undefined') questions = SEED_QUESTIONS;
+  }
 }
 
 async function refreshQuestions() {
@@ -339,30 +349,41 @@ function showAuthPage() {
 
 async function hideAuthPage() {
   showPageLoading();
-  document.getElementById('authPage').classList.add('hidden');
-  document.getElementById('appContainer').style.display = '';
-  updateAuthUI();
-  if (currentUser) {
-    var pRes = await dbGetProfile(currentUser.id);
-    if (pRes.success && pRes.data) {
-      currentUserProfile = pRes.data;
-      currentUserRole = pRes.data.role || 'user';
-    } else {
-      currentUserRole = 'user';
-    }
+  try {
+    document.getElementById('authPage').classList.add('hidden');
+    document.getElementById('appContainer').style.display = '';
     updateAuthUI();
-    var bRes = await dbFetchBookmarks();
-    if (bRes.success) {
-      bookmarkedIds = {};
-      bRes.data.forEach(function(b) { bookmarkedIds[b.question_id] = true; });
+    if (currentUser) {
+      try {
+        var pRes = await dbGetProfile(currentUser.id);
+        if (pRes && pRes.success && pRes.data) {
+          currentUserProfile = pRes.data;
+          currentUserRole = pRes.data.role || 'user';
+        } else {
+          currentUserRole = 'user';
+        }
+      } catch (e) {
+        currentUserRole = 'user';
+      }
+      updateAuthUI();
+      try {
+        var bRes = await dbFetchBookmarks();
+        if (bRes && bRes.success && bRes.data) {
+          bookmarkedIds = {};
+          bRes.data.forEach(function(b) { bookmarkedIds[b.question_id] = true; });
+        }
+      } catch (e) {}
+      var adminNav = document.getElementById('navAdminSection');
+      if (adminNav) adminNav.style.display = (currentUserRole === 'admin' || currentUserRole === 'superuser') ? '' : 'none';
     }
-    var adminNav = document.getElementById('navAdminSection');
-    if (adminNav) adminNav.style.display = currentUserRole === 'admin' || currentUserRole === 'superuser' ? '' : 'none';
+    await loadAllData();
+    navigate('dashboard');
+    updateBadges();
+  } catch (err) {
+    console.error('Error in hideAuthPage:', err);
+  } finally {
+    hidePageLoading();
   }
-  await loadAllData();
-  renderDashboard();
-  updateBadges();
-  hidePageLoading();
 }
 
 function closeAuthModal() {
@@ -1062,7 +1083,9 @@ function renderDashboard() {
   var g = document.getElementById('dashGreeting');
   if (g) g.textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 
-  document.getElementById('kpi-total').textContent = questions.length;
+  var totalEl = document.getElementById('kpi-total');
+  if (totalEl) totalEl.textContent = questions.length;
+
   ['100', '200', '300', '400', '500'].forEach(function(l) {
     var n = questions.filter(function(q) { return q.level === l; }).length;
     var el = document.getElementById('kpi-' + l);
@@ -1077,14 +1100,25 @@ function renderDashboard() {
   });
 
   var grid = document.getElementById('courseGrid');
-  grid.innerHTML = Object.values(courses).map(function(c) {
-    var years = [...new Set(questions.filter(function(q) { return q.level === c.level && q.course === c.course; }).map(function(q) { return q.year; }).filter(Boolean))].join(', ') || 'Multiple years';
-    return '<div class="course-card" onclick="filterByCourse(\'' + c.level + '\',\'' + sanitize(c.course).replace(/'/g, "\\'") + '\')">' +
-      '<div class="course-card-top"><span class="course-chip chip-' + c.level + '">' + c.level + 'L</span><span class="course-pq-count">' + c.count + ' PQ</span></div>' +
-      '<div class="course-title">' + sanitize(c.course) + '</div>' +
-      '<div class="course-code">' + sanitize(c.code || '') + '</div>' +
-      '<div class="course-meta"><span class="course-meta-item">' + sanitize(years) + '</span></div></div>';
-  }).join('');
+  if (grid) {
+    var courseList = Object.values(courses);
+    if (courseList.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:36px 16px;text-align:center;border:1px dashed var(--paper-ruled);background:var(--paper-bright);border-radius:2px">' +
+        '<h3 style="font-family:var(--font-serif);margin-bottom:6px">No questions available yet</h3>' +
+        '<p style="font-size:0.85rem;color:var(--ink-muted);margin-bottom:14px">Contribute new past questions to enrich the study hub library.</p>' +
+        '<button class="btn-primary" onclick="navigate(\'add\')">Contribute Question</button>' +
+        '</div>';
+    } else {
+      grid.innerHTML = courseList.map(function(c) {
+        var years = [...new Set(questions.filter(function(q) { return q.level === c.level && q.course === c.course; }).map(function(q) { return q.year; }).filter(Boolean))].join(', ') || 'Multiple years';
+        return '<div class="course-card" onclick="filterByCourse(\'' + c.level + '\',\'' + sanitize(c.course).replace(/'/g, "\\'") + '\')">' +
+          '<div class="course-card-top"><span class="course-chip chip-' + c.level + '">' + c.level + 'L</span><span class="course-pq-count">' + c.count + ' PQ</span></div>' +
+          '<div class="course-title">' + sanitize(c.course) + '</div>' +
+          '<div class="course-code">' + sanitize(c.code || '') + '</div>' +
+          '<div class="course-meta"><span class="course-meta-item">' + sanitize(years) + '</span></div></div>';
+      }).join('');
+    }
+  }
   renderDashboardMaterials();
   renderQuizHistory();
 }
